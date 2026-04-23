@@ -1,6 +1,42 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, encoder } from '../crypto/bytes';
 
+const STORAGE_KEY = 'audit-log-v1';
+
+function safeStorage(): Storage | null {
+  try {
+    return typeof globalThis !== 'undefined' && 'localStorage' in globalThis
+      ? (globalThis as { localStorage?: Storage }).localStorage ?? null
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeRead(key: string): string | null {
+  try {
+    return safeStorage()?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function safeWrite(key: string, value: string): void {
+  try {
+    safeStorage()?.setItem(key, value);
+  } catch {
+    /* ignore quota / unavailable */
+  }
+}
+
+function safeRemove(key: string): void {
+  try {
+    safeStorage()?.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
 export type AuditOperation =
   | 'CreateKey'
   | 'GenerateDataKey'
@@ -68,11 +104,7 @@ export class AuditLog {
 
   clear(): void {
     this.entries = [];
-    try {
-      localStorage.removeItem('audit-log-v1');
-    } catch {
-      /* ignore */
-    }
+    safeRemove(STORAGE_KEY);
   }
 
   verify(): { ok: boolean; brokenIndex: number | null } {
@@ -88,11 +120,11 @@ export class AuditLog {
   }
 
   private persist(): void {
-    localStorage.setItem('audit-log-v1', JSON.stringify(this.entries));
+    safeWrite(STORAGE_KEY, JSON.stringify(this.entries));
   }
 
   private load(): AuditEntry[] {
-    const raw = localStorage.getItem('audit-log-v1');
+    const raw = safeRead(STORAGE_KEY);
     if (!raw) return [];
     try {
       const parsed = JSON.parse(raw) as AuditEntry[];

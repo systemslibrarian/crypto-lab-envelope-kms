@@ -1,0 +1,420 @@
+crypto-lab
+  A full-spectrum, browser-based cryptography laboratory covering modern, classical, and post-quantum systems.
+  https://github.com/systemslibrarian/crypto-lab
+
+crypto-lab-aegis-gate
+  Browser-based AEGIS-256 authenticated encryption demo (draft-irtf-cfrg-aegis-aead-18). AES round function, 6-state sponge update, and tag derivation implemented from scratch and verified against official test vectors.
+  https://github.com/systemslibrarian/crypto-lab-aegis-gate
+
+crypto-lab-aes-modes
+  Browser-based AES modes demo — ECB, CBC, CTR, GCM, and CCM with live padding oracle attack. Real WebCrypto operations, ECB penguin visualization, Bleichenbacher oracle, and authenticated encryption breakdown. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-aes-modes
+
+crypto-lab-ascon
+  Browser-based Ascon demo — NIST Lightweight Cryptography Standard (FIPS SP 800-232, 2025). Ascon-AEAD128 encrypt/decrypt with constant-time tag verification, Ascon-Hash256 with avalanche analysis, side-by-side comparison against AES-GCM and ChaCha20-Poly1305. Designed for IoT and embedded constraints. No backends. No external crypto libraries.
+  https://github.com/systemslibrarian/crypto-lab-ascon
+
+crypto-lab-babel-hash
+  Browser-based demo of cryptographic hash functions — SHA-256, SHA3-256, and BLAKE3. Live avalanche effect visualizer, length extension attack against SHA-256, and why HMAC exists. Hash functions are the silent foundation of every other primitive.
+  https://github.com/systemslibrarian/crypto-lab-babel-hash
+
+crypto-lab-bb84
+  Browser-based BB84 Quantum Key Distribution simulation — photon polarization, basis sifting, QBER eavesdropper detection, privacy amplification, AES-256-GCM. Physics-based security. The only key exchange in the suite a quantum computer cannot break. No backends. No simulated math — only simulated physics.
+  https://github.com/systemslibrarian/crypto-lab-bb84
+
+crypto-lab-bcrypt-forge
+  Browser-based bcrypt deep-dive — anatomy, cost factor benchmarking, timing-safe verification, and a real-world breach simulation. Part of the crypto-lab suite.
+  https://github.com/systemslibrarian/crypto-lab-bcrypt-forge
+
+crypto-lab-biham-lens
+  Browser-based demo of differential cryptanalysis — the attack co-invented by Eli Biham and Adi Shamir (Israel, 1990) that broke DES. Live attack on a toy SPN cipher, DDT visualization, and the story of how Biham used his own attack to design Serpent.
+  https://github.com/systemslibrarian/crypto-lab-biham-lens
+
+crypto-lab-bike-vault
+  Browser-based BIKE demo — code-based post-quantum KEM using QC-MDPC codes, Black-Gray-Flip decoding, and side-by-side comparison against ML-KEM. NIST Round 4 alternate candidate. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-bike-vault
+
+crypto-lab-blind-oracle
+  Browser-based demo of fully homomorphic encryption — encrypt two numbers in your browser, a Rust/TFHE-rs server adds them homomorphically, returns the encrypted result. The server mathematically cannot read what it computed.
+  https://github.com/systemslibrarian/crypto-lab-blind-oracle
+
+crypto-lab-blind-oracle-api
+  Browser-based Rust + Axum + TFHE-rs backend for crypto-lab-blind-oracle — gate-bootstrapped homomorphic addition on FheUint8 ciphertexts. Holds only a ServerKey. Cannot decrypt its own output.
+  https://github.com/systemslibrarian/crypto-lab-blind-oracle-api
+
+crypto-lab-blind-sign
+  Browser-based blind signature demo — Chaum RSA blind signatures, Schnorr EC blind signatures, anonymous e-cash, private voting, and unlinkability proofs. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-blind-sign
+
+crypto-lab-bulletproofs
+  Browser-based zero-knowledge range proofs using Bulletproofs on ristretto255 — 64-bit commitments, aggregate proofs, inner-product argument, and tamper-rejection demo. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-bulletproofs
+
+crypto-lab-chacha20-stream
+  Browser-based ChaCha20 stream cipher — quarter-round stepper, keystream visualizer, nonce reuse attack demo, and encrypt/decrypt playground. ARX design, no AES-NI required. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-chacha20-stream
+
+crypto-lab-ciphertext-mirror
+  Browser-based demo of three papers on ML-KEM's FO re-encryption check as side-channel oracle: masked comparison leakage (Hermelink 2024/060), imperfect DF-oracles with adaptive LDPC decoding (Guo-Nabokov-Johansson 2026/070), and NTT+CRT RNR blinding that holds under SCA and fault (Duparc-Taha 2025/181). The mirror…
+  https://github.com/systemslibrarian/crypto-lab-ciphertext-mirror
+
+crypto-lab-ckks-lab
+  Browser-based CKKS approximate FHE demo — encrypted floating-point arithmetic, homomorphic neural network inference, rescaling, and the complete FHE trilogy (TFHE + BGV/BFV + CKKS). Part of the crypto-lab suite.
+  https://github.com/systemslibrarian/crypto-lab-ckks-lab
+
+crypto-lab-commit-gate
+  Browser-based commitment scheme demo — hash commitments, Pedersen commitments, binding and hiding properties, sealed-bid auction, and homomorphic addition. The primitive beneath ZKPs, MPC, and VSS.
+  https://github.com/systemslibrarian/crypto-lab-commit-gate
+
+crypto-lab-corrupted-oracle
+  Browser-based demo of the Dual_EC_DRBG backdoor — the NSA-planted vulnerability confirmed by Snowden. The standard was compromised. Here's the proof.
+  https://github.com/systemslibrarian/crypto-lab-corrupted-oracle
+
+crypto-lab-curve-lens
+  Browser-based elliptic curve demo — point addition, scalar multiplication, and live ECDH across P-256, Curve25519, and secp256k1. Real field arithmetic. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-curve-lens
+
+crypto-lab-curve448
+  Browser-based Curve448 demo featuring RFC 7748 X448 key exchange and RFC 8032 Ed448 signatures — the 224-bit "paranoid tier" for long-lived keys. Built on @noble/curves with side-by-side Curve25519/Ed25519 comparison.
+  https://github.com/systemslibrarian/crypto-lab-curve448
+
+crypto-lab-dead-sea-cipher
+  Browser-based cryptographic history demo — from Atbash in Jeremiah 25:26 (~600 BCE) to AES-256-GCM (2001 CE). Every cipher, every fatal flaw, every lesson that built the next one.
+  https://github.com/systemslibrarian/crypto-lab-dead-sea-cipher
+
+crypto-lab-dilithium-reject
+  Browser-based demo of ML-DSA (FIPS 204) rejection sampling. Live iteration feed, rejection-reason breakdown, acceptance histograms, and the timing side-channel tradeoff — why variable signing time is a feature, not a bug.
+  https://github.com/systemslibrarian/crypto-lab-dilithium-reject
+
+crypto-lab-dilithium-seal
+  Browser-based demo of ML-DSA (CRYSTALS-Dilithium), the lattice-based post-quantum digital signature scheme standardized as NIST FIPS 204 in August 2024. Sign, verify, and seal documents — quantum-resistant.
+  https://github.com/systemslibrarian/crypto-lab-dilithium-seal
+
+crypto-lab-drbg-arena
+  Browser-based NIST SP 800-90A demo — HMAC_DRBG, CTR_DRBG, and Hash_DRBG with state visualizers, seeding, reseeding, and live NIST SP 800-22 statistical tests. The correct-case companion to Corrupted Oracle.
+  https://github.com/systemslibrarian/crypto-lab-drbg-arena
+
+crypto-lab-ecdsa-forge
+  Browser-based ECDSA demo on secp256k1 and P-256 — sign/verify, live nonce reuse attack with full private key recovery (the PS3 hack, real math), RFC 6979 deterministic nonces verified against test vectors. The signature algorithm behind TLS, Bitcoin, Ethereum, SSH, and WebAuthn. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-ecdsa-forge
+
+crypto-lab-ed25519-forge
+  Browser-based Ed25519 keypair generation, signing, and signature verification — deterministic nonces, tamper detection, ZIP215 cofactor handling, and 64-byte compact signatures. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-ed25519-forge
+
+crypto-lab-elgamal-plain
+  Browser-based ElGamal encryption demo — Taher ElGamal's 1985 public-key scheme over RFC 3526 Group 14 and toy 11-bit parameters. Natural non-determinism via fresh ephemeral k, multiplicative homomorphism, ciphertext re-randomization for mix-nets. The direct ancestor of DSA and the structural basis of threshold decryption. No backends. No simulated 
+  https://github.com/systemslibrarian/crypto-lab-elgamal-plain
+
+crypto-lab-envelope-kms
+  Browser-based envelope encryption demo — RFC 3394/5649 key wrap, DEK/KEK hierarchy, KMS-style key rotation, re-wrap, and hash-chained audit log. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-envelope-kms
+
+crypto-lab-falcon-seal
+   Browser-based Falcon demo — compact NTRU lattice signatures with Fast Fourier Sampling, side-by-side comparison against ML-DSA and SLH-DSA, and implementation security warnings. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-falcon-seal
+
+crypto-lab-fhe-arena
+  Browser-based BGV/BFV integer FHE demo — homomorphic addition and multiplication, live noise budget visualizer, relinearization, SIMD batching, and real-world deployments in private genomics and encrypted databases.
+  https://github.com/systemslibrarian/crypto-lab-fhe-arena
+
+crypto-lab-format-ward
+  Browser-based format-preserving encryption demo — FF1 and FF3-1 live tokenization of credit cards, SSNs, and phone numbers. Real AES-256 Feistel rounds. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-format-ward
+
+crypto-lab-frodo-vault
+  Browser-based FrodoKEM demo — plain LWE (no ring structure), key generation, encapsulation, decapsulation, error distribution, FrodoKEM vs ML-KEM comparison. The belt-and-suspenders post-quantum KEM. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-frodo-vault
+
+crypto-lab-frost-threshold
+  Browser-based demo of FROST threshold signatures — t-of-n signing with RFC 9591, frost-ed25519 compiled to WASM. No single party holds the key. Any valid subset signs.
+  https://github.com/systemslibrarian/crypto-lab-frost-threshold
+
+crypto-lab-garbled-gate
+  Browser-based Yao's Garbled Circuits demo — gate-by-gate garbling, oblivious transfer for input wires, and the Millionaire's Problem solved end-to-end. The foundational two-party MPC protocol.
+  https://github.com/systemslibrarian/crypto-lab-garbled-gate
+
+crypto-lab-gg20-wallet
+  Browser-based GG20 threshold ECDSA demo — Paillier encryption, distributed key generation, and joint signing without any party holding the full private key. The protocol behind Fireblocks and Coinbase MPC.
+  https://github.com/systemslibrarian/crypto-lab-gg20-wallet
+
+crypto-lab-grover
+  Browser-based Grover's algorithm simulation — amplitude amplification, oracle phase kickback, inversion-about-mean diffusion, probability oscillation. AES-128 weakened to 2^64. AES-256 survives at 2^128. The fix is doubling key length. No backends. No simulated shortcuts.
+  https://github.com/systemslibrarian/crypto-lab-grover
+
+crypto-lab-harvest-timeline
+  Browser-based Harvest-Now-Decrypt-Later risk simulator built around the Mosca Inequality (X+Y>Z). 20+ algorithms, 4 CRQC scenarios, 5 org profiles, and cost-of-delay projections using 2025 GRI expert estimates.
+  https://github.com/systemslibrarian/crypto-lab-harvest-timeline
+
+crypto-lab-harvest-vault
+  Browser-based harvest-now-decrypt-later (HNDL) threat demo — intercept simulation, post-quantum migration urgency, timeline visualization. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-harvest-vault
+
+crypto-lab-hash-zoo
+  Browser-based SHA-256 vs SHA3-256 vs BLAKE3 internals — live avalanche analysis, Merkle-Damgård/sponge/tree construction diagrams, and timing benchmarks. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-hash-zoo
+
+crypto-lab-hawk
+  Browser-based educational demo of HAWK — the only lattice-based candidate in NIST's Round 2 Additional Signatures process. Integer-only arithmetic, discrete Gaussian sampling over Z with fixed tables, no rejection loop. Side-by-side with Falcon and ML-DSA.
+  https://github.com/systemslibrarian/crypto-lab-hawk
+
+crypto-lab-hqc-timing-break
+  Browser demo of the first cache-timing full-decryption oracle attack on post-quantum HQC (Dong & Guo, IACR 2026/693) — showing how Clang -O3 silently rewrites constant-time Reed-Muller decoding into secret-dependent branches. Real HQC math, deterministic leak model, Soft-ISD key recovery.
+  https://github.com/systemslibrarian/crypto-lab-hqc-timing-break
+
+crypto-lab-hqc-vault
+  Browser-based HQC demo — Hamming Quasi-Cyclic post-quantum KEM with perfect correctness, Reed-Muller/Reed-Solomon decoding, and three-way comparison against BIKE and ML-KEM. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-hqc-vault
+
+crypto-lab-hybrid-sign
+  Browser-based PQ/T composite signature demo implementing the Ed25519 + ML-DSA-65 hybrid per IETF LAMPS draft-ietf-lamps-pq-composite-sigs-16. Classical + post-quantum defense in depth for long-lived signatures.
+  https://github.com/systemslibrarian/crypto-lab-hybrid-sign
+
+crypto-lab-hybrid-wire
+  Browser-based demo of hybrid post-quantum key exchange — X25519 + ML-KEM-768 running in parallel, exactly as deployed in Chrome 124+, Cloudflare, and Signal. Secure against both classical and quantum attackers.
+  https://github.com/systemslibrarian/crypto-lab-hybrid-wire
+
+crypto-lab-ibe-gate
+  Browser-based Boneh-Franklin Identity-Based Encryption demo implementing the 2001 BasicIdent scheme with BLS12-381 pairings via @noble/curves. Setup → Extract → Encrypt → Decrypt with the key-escrow tradeoff shown honestly.
+  https://github.com/systemslibrarian/crypto-lab-ibe-gate
+
+crypto-lab-iron-letter
+  Browser-based demo of asymmetric encryption — ECIES P-256 vs RSA-OAEP, side by side. Seal a letter. Only one key can open it.
+  https://github.com/systemslibrarian/crypto-lab-iron-letter
+
+crypto-lab-iron-serpent
+  Browser-based demo of Serpent-256, the AES finalist with the largest security margin — featuring encrypt/decrypt, round comparison visualization, and live performance benchmarks
+  https://github.com/systemslibrarian/crypto-lab-iron-serpent
+
+crypto-lab-isogeny-gate
+  Browser-based isogeny cryptography demo — elliptic curve isogenies, toy SIDH key exchange over GF(71), supersingular isogeny graph with random walk, Castryck-Decru torsion-leak attack (August 2022), CSIDH and SQIsign survivors. The scheme that fell and the math that survived. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-isogeny-gate
+
+crypto-lab-j-uniward
+  Browser-based J-UNIWARD JPEG steganography demo — Daubechies-8 wavelet cost, full STC (h=12, 4096-state Viterbi), PBKDF2+HKDF key schedule, adaptive payload embedding, live steganalysis comparison. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-j-uniward
+
+crypto-lab-kdf-arena
+   Browser-based KDF benchmarking — live timing and memory comparison of HKDF, PBKDF2, scrypt, and Argon2id with adjustable cost parameters and bar chart visualization. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-kdf-arena
+
+crypto-lab-kdf-chain
+  Browser-based KDF demo — HKDF, PBKDF2, scrypt, and Argon2id compared side by side with live parameter tuning, real timing measurements, and a KDF decision tree. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-kdf-chain
+
+crypto-lab-kerberos
+  Browser-based Kerberos v5 authentication demo (RFC 4120) — Needham-Schroeder, Lowe attack, full AS/TGS/AP flow, AES-256-CTS-HMAC-SHA1 tickets, and clock-skew replay defense. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-kerberos
+
+crypto-lab-kyber-vault
+  Browser demo for ML-KEM (CRYSTALS-Kyber), the post-quantum key encapsulation mechanism standardized as NIST FIPS 203 in August 2024.
+  https://github.com/systemslibrarian/crypto-lab-kyber-vault
+
+crypto-lab-kyberslash
+  Browser-based educational simulation of the KyberSlash timing attacks on ML-KEM (Kyber) — secret-dependent division in poly_tomsg and poly_compress. Based on the CHES 2025 Best Paper. Vulnerable code, Barrett-reduction fix, and live attack simulation.
+  https://github.com/systemslibrarian/crypto-lab-kyberslash
+
+crypto-lab-lattice-fault
+  Browser-based lattice PQC implementation attack demo — NTT power analysis (ML-KEM CPA), rejection sampling fault bypass (ML-DSA key recovery), KyberSlash timing side-channel, faulty KECCAK seed injection. Mathematical security ≠ implementation security. No backends. Simulated attacks.
+  https://github.com/systemslibrarian/crypto-lab-lattice-fault
+
+crypto-lab-lll-break
+  Browser-based LLL and BKZ lattice reduction demo — Gram-Schmidt orthogonalization, Lovász condition, step-by-step basis reduction animation, toy LWE primal attack, parameter explorer showing why Kyber's n=256 q=3329 survives while toy parameters fail instantly. The hardness assumption, made tangible. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-lll-break
+
+crypto-lab-lms-ledger
+  Browser-based LMS/HSS stateful hash-based signatures (NIST SP 800-208) — 32-leaf W-OTS+ key state grid, sign messages one at a time, live one-time key reuse attack with real forgery demo, HSS hierarchical tree explainer, and CNSA 2.0 firmware signing context. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-lms-ledger
+
+crypto-lab-lms-xmss
+  Browser-based Leighton-Micali Signatures (LMS) and Hierarchical Signature System (HSS) demo per RFC 8554 and NIST SP 800-208. LM-OTS + Merkle trees + two-level HSS, with the state-management story told honestly.
+  https://github.com/systemslibrarian/crypto-lab-lms-xmss
+
+crypto-lab-mac-race
+  Browser-based MAC demo — HMAC, CMAC, Poly1305, and GHASH compared with live length extension attack, timing attack, and nonce reuse demonstrations. Real WebCrypto operations. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-mac-race
+
+crypto-lab-mceliece-gate
+  Browser-based Classic McEliece demo — the oldest post-quantum KEM (1978), binary Goppa codes, visceral 261KB public key visualization, and four-way comparison against ML-KEM, BIKE, and HQC. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-mceliece-gate
+
+crypto-lab-merkle-vault
+  Browser-based Merkle tree and inclusion proof demo — build trees up to 16 leaves with real SHA-256, generate O(log n) membership proofs, tamper any leaf and watch the root change, with Git, Bitcoin, and Certificate Transparency walkthroughs. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-merkle-vault
+
+crypto-lab-mls-group
+  Browser-based Messaging Layer Security demo (RFC 9420) — TreeKEM ratchet tree, epoch key schedule, member add/remove/update, and group application messaging. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-mls-group
+
+crypto-lab-model-breach
+  Browser-based HiAE threat model case study — AESL, Theorem 1 candidate enumeration, MITM state recovery, byte decomposition, guess-and-determine key recovery. Security claims are contracts. The threat model is the fine print. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-model-breach
+
+crypto-lab-mpcith-sign
+  Browser-based MPC-in-the-Head signature demo — additive secret sharing, SHA-256 commitments, Merkle proofs, Fiat-Shamir transform, N-party simulation with hidden-view challenge, toy PERK permutation witness. Post-quantum signatures from hash functions alone. NIST Round 2: Mirath, PERK, FAEST. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-mpcith-sign
+
+crypto-lab-noise-pipe
+  Browser-based Noise Protocol Framework demo — NN, XX, IK, and IKpsk2 handshake patterns with real X25519 arithmetic, live transport encryption, and a WireGuard deep dive. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-noise-pipe
+
+crypto-lab-nonce-guard
+  Browser-based AES-GCM vs AES-GCM-SIV comparison — live nonce reuse attack showing keystream XOR recovery and GHASH key extraction, synthetic IV construction visualizer, and side-by-side misuse-resistance comparison. RFC 8452. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-nonce-guard
+
+crypto-lab-nonce-lattice
+  
+  https://github.com/systemslibrarian/crypto-lab-nonce-lattice
+
+crypto-lab-ntru-classic
+  Browser-based NTRU demo implementing the original 1996 Hoffstein-Pipher-Silverman lattice cryptosystem (EESS#1 v3.3, ees443ep1). Polynomial ring arithmetic from scratch — the lattice scheme that started it all.
+  https://github.com/systemslibrarian/crypto-lab-ntru-classic
+
+crypto-lab-oblivious-shelf
+  Browser-based 2-server XOR Private Information Retrieval (Chor et al. 1995) — a patron retrieves any book from a 16-item catalog without the server learning which one was requested. Real IT-PIR arithmetic, step-by-step query walkthrough, and privacy audit panel. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-oblivious-shelf
+
+crypto-lab-opaque-gate
+  Browser-based OPAQUE aPAKE demo (RFC 9807, July 2025) — OPRF blind/evaluate/unblind, AES-256-GCM credential envelope, 3DH mutual authentication, server breach simulation. The password never touches the server. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-opaque-gate
+
+crypto-lab-oram-vault
+  Browser-based Path ORAM demo implementing Stefanov et al. (CCS 2013 / JACM 2018). Hides access patterns from cloud storage: tree, stash, position map, and adversary-view visualization.
+  https://github.com/systemslibrarian/crypto-lab-oram-vault
+
+crypto-lab-ot-gate
+  Browser-based 1-of-2 Oblivious Transfer — the Simplest OT protocol (Chou-Orlandi 2015) over Curve25519 with real X25519 arithmetic and AES-256-GCM encryption. Receiver gets exactly one message, sender learns nothing about which. Foundational primitive for secure MPC. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-ot-gate
+
+crypto-lab-padding-oracle
+  Browser-based CBC padding oracle attack demo — full Vaudenay 2002 chosen-ciphertext attack with real AES-CBC, byte-by-byte plaintext recovery, and coverage of ASP.NET, Lucky Thirteen, and POODLE exploits. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-padding-oracle
+
+crypto-lab-paillier-gate
+  Browser-based Paillier cryptosystem demo — Pascal Paillier's 1999 additive homomorphic encryption. Encrypt, decrypt, homomorphic addition without decrypting. Private 10-voter election simulation and 5-hospital patient aggregation. The primitive underlying GG20 threshold ECDSA, Helios voting, and ElectionGuard. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-paillier-gate
+
+crypto-lab-pairing-gate
+  Browser-based BLS12-381 pairing cryptography — bilinear pairing explainer, BLS signature sign/verify with real @noble/curves arithmetic, signature aggregation visualizer (up to 100 signers → 1 proof), and rogue key attack demo. Powers Ethereum 2.0 and Zcash. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-pairing-gate
+
+crypto-lab-patron-shield
+  Browser-based demo of two-server Information-Theoretic Private Information Retrieval (IT-PIR) — applied to library catalog privacy. Because patrons deserve mathematical guarantees, not just policy promises.
+  https://github.com/systemslibrarian/crypto-lab-patron-shield
+
+crypto-lab-phantom-vault
+  Browser-based stateless password manager — derive any password from a master passphrase using HMAC-DRBG. Nothing stored, nothing synced, nothing to breach.
+  https://github.com/systemslibrarian/crypto-lab-phantom-vault
+
+crypto-lab-pki-chain
+  Browser-based PKI demo — X.509 certificate chains, trust store validation, CA compromise cascades, Certificate Transparency with Merkle inclusion proofs, and post-quantum migration to ML-DSA.
+  https://github.com/systemslibrarian/crypto-lab-pki-chain
+
+crypto-lab-poly1305-mac
+  Browser-based Poly1305 MAC demo — polynomial evaluation over GF(2¹³⁰−5), constant-time tag verification, key-reuse attack visualizer, and Polynomial Stepper. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-poly1305-mac
+
+crypto-lab-pq-rotation
+  Browser-based post-quantum migration planner for operational teams. Hybrid X.509 certs (ECDSA-P256 + ML-DSA-65), multi-jurisdiction regulatory timelines (CNSA 2.0, NIS, NCSC, BSI...), and a rolling key-rotation simulator with canary and rollback.
+  https://github.com/systemslibrarian/crypto-lab-pq-rotation
+
+crypto-lab-pq-tls-handshake
+  Browser-based TLS 1.3 handshake simulation using the X25519MLKEM768 hybrid post-quantum key exchange (codepoint 0x11EC) per draft-ietf-tls-ecdhe-mlkem-04. Byte-level framing, full key schedule, side-by-side vs. classical X25519.
+  https://github.com/systemslibrarian/crypto-lab-pq-tls-handshake
+
+crypto-lab-protocol-compose
+  Browser-based protocol composition safety demo — MAC-then-Encrypt vs Encrypt-then-MAC, padding oracle attack, CRIME, and the composition failures that drove TLS 1.3. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-protocol-compose
+
+crypto-lab-psi-gate
+  Browser-based Private Set Intersection demo implementing classic DH-PSI (Meadows 1986, Huberman-Franklin-Hogg 1999) over ristretto255 with RFC 9380 hash-to-curve. The primitive behind Signal contact discovery and Apple password monitoring.
+  https://github.com/systemslibrarian/crypto-lab-psi-gate
+
+crypto-lab-quantum-vault-kpqc
+  Browser-based demo of threshold file encryption — Shamir Secret Sharing combined with Korean post-quantum cryptography (SMAUG-T + HAETAE). Split the key, not the file.
+  https://github.com/systemslibrarian/crypto-lab-quantum-vault-kpqc
+
+crypto-lab-ratchet-wire
+  Browser-based demo of the Double Ratchet Algorithm — the cryptographic protocol powering Signal, WhatsApp, and Google Messages. Live conversation with forward secrecy, break-in recovery, and key compromise simulation.
+  https://github.com/systemslibrarian/crypto-lab-ratchet-wire
+
+crypto-lab-ring-sign
+  Browser-based ring signature demo — LSAG signatures, key image linkability, double-spend detection, group signatures with manager opening, and Monero transaction privacy. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-ring-sign
+
+crypto-lab-rsa-forge
+  Browser-based RSA demo — textbook RSA, OAEP, PSS signatures, and live attacks including small exponent, Bleichenbacher PKCS#1 v1.5 oracle, and padding oracle. Real WebCrypto operations. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-rsa-forge
+
+crypto-lab-scloud-vault
+  Browser-based S-Cloud+ demo — unstructured LWE KEM with ternary secrets and BW₃₂ lattice coding, faithful to ePrint 2024/1306. China's conservative post-quantum KEM. Part of crypto-lab.
+  https://github.com/systemslibrarian/crypto-lab-scloud-vault
+
+crypto-lab-shadow-vault
+  Browser-based demo of deniable encryption — one container, two passphrases, two messages. The real one and the decoy. No way to prove which is which.
+  https://github.com/systemslibrarian/crypto-lab-shadow-vault
+
+crypto-lab-shamir-gate
+  Browser-based demo of Shamir's Secret Sharing — split a secret into n shares, reconstruct from any k. Polynomial curve visualization, information-theoretic security proof, and AES key protection. Invented by Adi Shamir (Weizmann Institute, Israel) in 1979.
+  https://github.com/systemslibrarian/crypto-lab-shamir-gate
+
+crypto-lab-shor
+  Browser-based Shor's algorithm simulation — modular exponentiation period finding, QFT probability distribution, continued fractions, factor extraction. The reason RSA, ECC, and Diffie-Hellman need replacing. No backends. No simulated shortcuts — the number theory is real.
+  https://github.com/systemslibrarian/crypto-lab-shor
+
+crypto-lab-silent-tally
+  Browser-based demo of secure multi-party computation — five hospitals compute combined enrollment without revealing individual counts. Shamir SSS · additive homomorphism · GF(2⁶¹-1) · no trusted third party.
+  https://github.com/systemslibrarian/crypto-lab-silent-tally
+
+crypto-lab-snark-arena
+  Browser-based Groth16 vs PLONK demo — trusted setup ceremonies, proof size comparison, the toxic waste problem, and production deployments in Zcash, Polygon zkEVM, WorldID, and zkLogin.
+  https://github.com/systemslibrarian/crypto-lab-snark-arena
+
+crypto-lab-sphincs-ledger
+  Browser-based demo of SLH-DSA (SPHINCS+), a hash-based post-quantum digital signature scheme standardized as NIST FIPS 205
+  https://github.com/systemslibrarian/crypto-lab-sphincs-ledger
+
+crypto-lab-stark-tower
+  Browser-based zk-STARK demo — AIR constraints, FRI polynomial commitments, and end-to-end Fibonacci proof. No trusted setup. Post-quantum secure. The protocol behind StarkNet, StarkEx, and Risc Zero.
+  https://github.com/systemslibrarian/crypto-lab-stark-tower
+
+crypto-lab-stego-suite
+  Browser-based steganography suite — LSB substitution, DCT-domain hiding, and adaptive embedding with live chi-squared steganalysis. Hide the message, not just the content.
+  https://github.com/systemslibrarian/crypto-lab-stego-suite
+
+crypto-lab-threshold-decrypt
+  Browser-based threshold decryption demo — ElGamal over P-256, distributed key generation, verifiable partial decryptions with NIZK proofs, and t-of-n combination without any party holding the full key.
+  https://github.com/systemslibrarian/crypto-lab-threshold-decrypt
+
+crypto-lab-threshold-mldsa
+  Browser-based threshold ML-DSA demo — distributed post-quantum signing where k-of-n parties collaborate without any single party holding the full key. In development.
+  https://github.com/systemslibrarian/crypto-lab-threshold-mldsa
+
+crypto-lab-timing-oracle
+  Browser-based timing side-channel attack demo — string comparison leakage, HMAC verification timing, RSA private key bit leakage, and cache-timing attacks with real performance.now() measurements and constant-time defenses. No backends. No simulated timing.
+  https://github.com/systemslibrarian/crypto-lab-timing-oracle
+
+crypto-lab-vrf-gate
+  Browser-based VRF and VDF demo (RFC 9381) — ECVRF P-256 prove/verify with hash-to-curve, Wesolowski VDF repeated squaring with proof, RANDAO+VDF randomness beacon simulation with last-reveal attack and VDF protection. Chainlink VRF, Ethereum RANDAO, Filecoin leader election. No backends. No simulated math.
+  https://github.com/systemslibrarian/crypto-lab-vrf-gate
+
+crypto-lab-vss-gate
+  Browser-based Feldman VSS and Pedersen VSS demo — verifiable secret sharing with live cheating dealer detection, commitment verification, and the layer beneath FROST and threshold wallets.
+  https://github.com/systemslibrarian/crypto-lab-vss-gate
+
+crypto-lab-world-ciphers
+  Browser-based national cipher demo — Camellia (Japan), ARIA (South Korea), SM4 (China), and Kuznyechik (Russia) side by side with AES. Encrypt/decrypt playgrounds, S-box analysis, and geopolitical compliance context.
+  https://github.com/systemslibrarian/crypto-lab-world-ciphers
+
+crypto-lab-world-hashes
+  Browser-based national hash standard demo — SM3 (China), Streebog (Russia), and Kupyna (Ukraine) alongside SHA-256 and SHA-3. Five-way simultaneous hashing, avalanche analysis, and cryptographic sovereignty context.
+  https://github.com/systemslibrarian/crypto-lab-world-hashes
+
+crypto-lab-x3dh-wire
+  Browser-based X3DH key agreement demo — the asynchronous handshake behind Signal. Real X25519 arithmetic, four DH operations, HKDF-SHA-256. No backends. No simulated math
+  https://github.com/systemslibrarian/crypto-lab-x3dh-wire
+
+crypto-lab-zk-proof-lab
+  Browser-based zero-knowledge proof lab — six exhibits from Ali Baba cave to zk-SNARK. Real Schnorr arithmetic, SHA-256 commitments, transcript replay, and deterministic scenario presets. No framework, no backend.
+  https://github.com/systemslibrarian/crypto-lab-zk-proof-lab
+
