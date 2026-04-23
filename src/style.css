@@ -22,12 +22,46 @@
   --danger: #bf3f3f;
 }
 
+/* ── Accessibility utilities ───────────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0.5rem;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 8px 8px;
+  background: var(--accent-2);
+  color: var(--bg);
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 0.15s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
   font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
   color: var(--text);
   background:
@@ -76,9 +110,13 @@ body {
   border: 1px solid var(--edge);
   background: color-mix(in oklab, var(--panel-2) 88%, transparent);
   color: var(--text);
-  padding: 0.5rem 0.8rem;
+  padding: 0.6rem 1rem;
   border-radius: 999px;
   cursor: pointer;
+  /* WCAG 2.5.5: minimum 44×44px touch target */
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 0.9rem;
 }
 
 #theme-toggle {
@@ -95,6 +133,23 @@ body {
 .chip:hover,
 #theme-toggle:hover {
   border-color: var(--accent-2);
+}
+
+/* Keyboard focus ring — visible on all interactive elements */
+.chip:focus-visible,
+#theme-toggle:focus-visible,
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
+/* Remove default outline only when focus-visible is supported */
+.chip:focus:not(:focus-visible),
+#theme-toggle:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .flow-list {
@@ -166,6 +221,13 @@ pre {
 
 .audit-item.broken {
   border-left-color: var(--danger);
+  background: color-mix(in oklab, var(--danger) 8%, transparent);
+}
+
+.audit-item.broken::before {
+  content: '⚠ Chain broken — ';
+  color: var(--danger);
+  font-weight: 700;
 }
 
 .timeline li {
@@ -190,6 +252,21 @@ pre {
 .citations {
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+.table-scroll-hint {
+  display: none;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-bottom: 0.25rem;
+}
+
+.chip:disabled,
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .scripture-footer {
@@ -223,5 +300,56 @@ pre {
 
   .flow-list li {
     flex-direction: column;
+  }
+
+  .comparison-table {
+    font-size: 0.82rem;
+  }
+
+  .table-scroll-hint {
+    display: block;
+  }
+
+  .hero h1 {
+    font-size: 1.3rem;
+  }
+
+  .panel {
+    padding: 0.75rem;
+  }
+
+  .controls-row,
+  .chip-row {
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 0.93rem;
+  }
+
+  #app {
+    width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .hero {
+    padding: 1rem 3rem 0.75rem 0.75rem;
+  }
+
+  pre {
+    font-size: 0.78rem;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 0.35rem;
+    font-size: 0.78rem;
+  }
+
+  .audit-item header {
+    font-size: 0.88rem;
   }
 }

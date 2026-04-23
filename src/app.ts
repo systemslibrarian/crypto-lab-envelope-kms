@@ -67,18 +67,26 @@ function envelopeInspector(envelopes: EnvelopeRecord[]): string {
 function comparisonPanel(): string {
   return `<section class="panel">
     <h2>KMS Comparison</h2>
-    <table class="comparison-table">
+    <div class="table-scroll-hint" aria-hidden="true">← scroll →</div>
+    <table class="comparison-table" aria-label="KMS provider feature comparison">
+      <caption class="sr-only">Side-by-side comparison of AWS KMS, Google Cloud KMS, Azure Key Vault, and HashiCorp Vault transit engine.</caption>
       <thead>
-        <tr><th>Row</th><th>AWS KMS</th><th>Google Cloud KMS</th><th>Azure Key Vault</th><th>HashiCorp Vault (transit)</th></tr>
+        <tr>
+          <th scope="col">Feature</th>
+          <th scope="col">AWS KMS</th>
+          <th scope="col">Google Cloud KMS</th>
+          <th scope="col">Azure Key Vault</th>
+          <th scope="col">HashiCorp Vault (transit)</th>
+        </tr>
       </thead>
       <tbody>
-        <tr><td>Envelope pattern</td><td>Data keys via GenerateDataKey [1]</td><td>Envelope model in docs [2]</td><td>Wrap/unwrap key APIs [3]</td><td>Transit encrypt/decrypt [4]</td></tr>
-        <tr><td>Default symmetric algorithm</td><td>AES-256 for symmetric KMS keys [1]</td><td>AES-256 for software/HSM symmetric keys [2]</td><td>AES key wrap / RSA wrap options [3]</td><td>AES-GCM96 for transit data keys [4]</td></tr>
-        <tr><td>Rotation model</td><td>Automatic or on-demand key rotation [1]</td><td>Scheduled/manual version rotation [2]</td><td>Versioned keys with rotation policies [3]</td><td>Versioned key rotation endpoint [4]</td></tr>
-        <tr><td>Audit integration</td><td>CloudTrail [1]</td><td>Cloud Audit Logs [2]</td><td>Azure Monitor diagnostics [3]</td><td>Audit devices [4]</td></tr>
-        <tr><td>BYOK/HYOK support</td><td>BYOK import + external key store [1]</td><td>Import jobs + EKM [2]</td><td>BYOK and managed HSM options [3]</td><td>Customer-managed deployment [4]</td></tr>
-        <tr><td>FIPS 140-3 level</td><td>HSM-backed tiers documented by region [1]</td><td>Cloud HSM tiers documented [2]</td><td>Managed HSM validation docs [3]</td><td>Depends on underlying HSM boundary [4]</td></tr>
-        <tr><td>Typical latency per call</td><td>Single-digit to low tens of ms [1]</td><td>Low tens of ms typical [2]</td><td>Single-digit to tens of ms [3]</td><td>Deployment dependent [4]</td></tr>
+        <tr><th scope="row">Envelope pattern</th><td>Data keys via GenerateDataKey [1]</td><td>Envelope model in docs [2]</td><td>Wrap/unwrap key APIs [3]</td><td>Transit encrypt/decrypt [4]</td></tr>
+        <tr><th scope="row">Default symmetric algorithm</th><td>AES-256 for symmetric KMS keys [1]</td><td>AES-256 for software/HSM symmetric keys [2]</td><td>AES key wrap / RSA wrap options [3]</td><td>AES-GCM96 for transit data keys [4]</td></tr>
+        <tr><th scope="row">Rotation model</th><td>Automatic or on-demand key rotation [1]</td><td>Scheduled/manual version rotation [2]</td><td>Versioned keys with rotation policies [3]</td><td>Versioned key rotation endpoint [4]</td></tr>
+        <tr><th scope="row">Audit integration</th><td>CloudTrail [1]</td><td>Cloud Audit Logs [2]</td><td>Azure Monitor diagnostics [3]</td><td>Audit devices [4]</td></tr>
+        <tr><th scope="row">BYOK/HYOK support</th><td>BYOK import + external key store [1]</td><td>Import jobs + EKM [2]</td><td>BYOK and managed HSM options [3]</td><td>Customer-managed deployment [4]</td></tr>
+        <tr><th scope="row">FIPS 140-3 level</th><td>HSM-backed tiers documented by region [1]</td><td>Cloud HSM tiers documented [2]</td><td>Managed HSM validation docs [3]</td><td>Depends on underlying HSM boundary [4]</td></tr>
+        <tr><th scope="row">Typical latency per call</th><td>Single-digit to low tens of ms [1]</td><td>Low tens of ms typical [2]</td><td>Single-digit to tens of ms [3]</td><td>Deployment dependent [4]</td></tr>
       </tbody>
     </table>
     <p class="citations">[1] AWS KMS docs, [2] Google Cloud KMS docs, [3] Azure Key Vault docs, [4] Vault transit docs.</p>
@@ -229,41 +237,59 @@ async function runPreset(name: string) {
       const created = await kmsApi.CreateKey('AES256', 'breach-response');
       state.keyId = created.keyId;
     }
-    await kmsApi.RotateKey(state.keyId, 'breach-response');
-    await kmsApi.ScheduleKeyDeletion(state.keyId, 7, 'breach-response');
+    // Rotate first to create a new active version, then re-wrap envelopes to it,
+    // then schedule deletion so the old version enters its grace window.
+    const rotated = await kmsApi.RotateKey(state.keyId, 'breach-response');
     if (state.envelopes.length) {
       const latest = state.envelopes[state.envelopes.length - 1];
       state.envelopes[state.envelopes.length - 1] = await rewrapEnvelope(latest, state.keyId);
     }
-    state.timeline.push('Preset Breach Response -> rotate, schedule deletion, re-wrap');
+    await kmsApi.ScheduleKeyDeletion(state.keyId, 7, 'breach-response');
+    state.timeline.push(`Preset Breach Response -> rotate to v${rotated.version}, re-wrap, schedule deletion (7 days)`);
   }
+}
+
+function announce(message: string): void {
+  const region = document.getElementById('status-region');
+  if (region) {
+    region.textContent = message;
+    // briefly clear so repeated identical messages still fire
+    setTimeout(() => { region.textContent = ''; }, 3000);
+  }
+}
+
+function handleError(err: unknown, context: string): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  state.timeline.push(`Error in ${context}: ${msg}`);
+  announce(`Error: ${msg}`);
 }
 
 function bind(root: HTMLElement): void {
   root.querySelector('#create-key')?.addEventListener('click', async () => {
-    await onCreateKey();
+    try { await onCreateKey(); } catch (err) { handleError(err, 'CreateKey'); }
     render(root);
   });
   root.querySelector('#seal-btn')?.addEventListener('click', async () => {
-    await onSeal();
+    try { await onSeal(); } catch (err) { handleError(err, 'Seal'); }
     render(root);
   });
   root.querySelector('#open-btn')?.addEventListener('click', async () => {
-    await onOpen();
+    try { await onOpen(); } catch (err) { handleError(err, 'Open'); }
     render(root);
   });
   root.querySelector('#rotate-btn')?.addEventListener('click', async () => {
-    await onRotate();
+    try { await onRotate(); } catch (err) { handleError(err, 'Rotate'); }
     render(root);
   });
   root.querySelector('#rewrap-btn')?.addEventListener('click', async () => {
-    await onRewrap();
+    try { await onRewrap(); } catch (err) { handleError(err, 'Rewrap'); }
     render(root);
   });
 
   root.querySelectorAll<HTMLButtonElement>('.preset-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      await runPreset(btn.dataset.preset ?? 'hello');
+      const preset = btn.dataset.preset ?? 'hello';
+      try { await runPreset(preset); } catch (err) { handleError(err, `preset:${preset}`); }
       render(root);
     });
   });
@@ -278,6 +304,7 @@ function bind(root: HTMLElement): void {
   root.querySelector('#tamper-btn')?.addEventListener('click', () => {
     if (auditLog.list().length > 1) {
       auditLog.tamper(1, 'tampered-entry');
+      announce('Audit entry tampered — chain broken at index 1');
       render(root);
     }
   });
