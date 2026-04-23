@@ -26,7 +26,10 @@ const FLOWS: Record<string, FlowLine[]> = {
 export function renderRequestFlow(active = 'GenerateDataKey'): string {
   const rows = FLOWS[active] ?? FLOWS.GenerateDataKey;
   const options = Object.keys(FLOWS)
-    .map((name) => `<button class="chip flow-btn" data-flow="${name}">${name}</button>`)
+    .map(
+      (name) =>
+        `<button class="chip flow-btn${name === active ? ' active' : ''}" data-flow="${name}" aria-pressed="${name === active}">${name}</button>`,
+    )
     .join('');
 
   return `<section class="panel">

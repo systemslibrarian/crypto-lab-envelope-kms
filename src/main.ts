@@ -6,28 +6,24 @@ if (!root) throw new Error('Missing app root');
 
 await bootstrap(root);
 
-const toggle = () => {
-  const button = document.querySelector<HTMLButtonElement>('#theme-toggle');
-  if (!button) return;
-  const current = document.documentElement.getAttribute('data-theme') ?? 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
-  button.textContent = next === 'dark' ? '🌙' : '☀️';
-  button.setAttribute('aria-label', next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-};
+const ICON_LIGHT = '☀';
+const ICON_DARK = '☾';
 
-document.addEventListener('click', (event) => {
-  const target = event.target as HTMLElement;
-  if (target?.id === 'theme-toggle') {
-    toggle();
-  }
-});
+function applyToggleIcon(button: HTMLButtonElement): void {
+  const isLight = document.documentElement.classList.contains('light');
+  button.textContent = isLight ? ICON_DARK : ICON_LIGHT;
+  button.setAttribute(
+    'aria-label',
+    isLight ? 'Switch to dark mode' : 'Switch to light mode',
+  );
+}
 
-document.addEventListener('DOMContentLoaded', () => {
-  const button = document.querySelector<HTMLButtonElement>('#theme-toggle');
-  if (!button) return;
-  const theme = document.documentElement.getAttribute('data-theme') ?? 'dark';
-  button.textContent = theme === 'dark' ? '🌙' : '☀️';
-  button.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-});
+const toggleButton = document.querySelector<HTMLButtonElement>('#themeToggle');
+if (toggleButton) {
+  applyToggleIcon(toggleButton);
+  toggleButton.addEventListener('click', () => {
+    const next = document.documentElement.classList.toggle('light');
+    localStorage.setItem('theme', next ? 'light' : 'dark');
+    applyToggleIcon(toggleButton);
+  });
+}

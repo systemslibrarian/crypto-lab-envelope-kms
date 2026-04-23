@@ -3,6 +3,154 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0e1f1e" />
+    <title>Envelope KMS Lab — Crypto Lab</title>
+    <meta
+      name="description"
+      content="The operational crypto layer — DEK/KEK hierarchies, RFC 3394 key wrap, versioned rotation, and hash-chained audit logging."
+    />
+
+    <!-- Favicon (inline SVG, matches CL badge) -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'&gt;&lt;rect width='64' height='64' rx='12' fill='%23162b2a'/&gt;&lt;text x='50%25' y='54%25' text-anchor='middle' dominant-baseline='middle' font-family='monospace' font-size='28' font-weight='700' fill='%234dcfb0'&gt;CL&lt;/text&gt;&lt;/svg&gt;"
+    />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Envelope KMS Lab — Crypto Lab" />
+    <meta
+      property="og:description"
+      content="DEK/KEK hierarchies, RFC 3394 key wrap, versioned rotation, and hash-chained audit logging."
+    />
+    <meta property="og:site_name" content="Crypto Lab" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Envelope KMS Lab — Crypto Lab" />
+    <meta
+      name="twitter:description"
+      content="DEK/KEK hierarchies, RFC 3394 key wrap, versioned rotation, and hash-chained audit logging."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:opsz,wght,SOFT@9..144,400,50;9..144,500,50&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function () {
+        if (localStorage.getItem('theme') === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="cl-header">
+      <div class="cl-header-left">
+        <div class="cl-badge">CL</div>
+        <div class="cl-header-text">
+          <span class="cl-title">CRYPTO LAB</span>
+          <a
+            class="cl-sub"
+            href="https://crypto-lab.systemslibrarian.dev/"
+            target="_blank"
+            rel="noopener"
+          >
+            crypto-lab.systemslibrarian.dev
+          </a>
+        </div>
+      </div>
+      <nav class="cl-header-nav" aria-label="Primary">
+        <a
+          class="cl-nav-btn"
+          href="https://crypto-lab.systemslibrarian.dev/"
+          target="_blank"
+          rel="noopener"
+          >All Demos</a
+        >
+        <a
+          class="cl-nav-btn"
+          href="https://github.com/systemslibrarian/crypto-lab-envelope-kms"
+          target="_blank"
+          rel="noopener"
+          >GitHub</a
+        >
+        <button
+          class="cl-theme-toggle"
+          id="themeToggle"
+          aria-label="Toggle theme"
+          type="button"
+        >
+          ☀
+        </button>
+      </nav>
+    </header>
+
+    <main id="main-content" class="wrap">
+      <div id="app"></div>
+      <div id="status-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+    </main>
+
+    <div id="toast-host" class="toast-host" aria-hidden="true"></div>
+
+    <section class="wrap reality-wrap">
+      <details class="reality-panel">
+        <summary>What's Real, What's Simulated</summary>
+        <div class="reality-grid">
+          <div>
+            <h3>Real in this demo</h3>
+            <ul>
+              <li>RFC 3394 AES Key Wrap with byte-exact RFC test vectors.</li>
+              <li>RFC 5649 padded key wrap with byte-exact RFC test vectors.</li>
+              <li>AES-256-GCM sealing via WebCrypto.</li>
+              <li>SHA-256 hash-chained audit log.</li>
+              <li>In-memory DEK zeroization before discard.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Simulated for browser context</h3>
+            <ul>
+              <li>The KMS is an in-memory module, not an HSM-backed service.</li>
+              <li>Audit entries persist to localStorage rather than a write-once store.</li>
+              <li>Multi-region is represented in one browser runtime.</li>
+              <li>KEK access control is module-boundary scope, not IAM policy.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Not included (out of scope)</h3>
+            <ul>
+              <li>Quorum-based key ceremonies.</li>
+              <li>FIPS 140-3 certification workflows.</li>
+              <li>KMIP wire protocol.</li>
+              <li>PKCS#11 HSM bindings.</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <footer class="footer wrap">
+      <div class="footer-quote">
+        <blockquote>
+          So whether you eat or drink or whatever you do, do it all for the glory of God.
+        </blockquote>
+        <cite>1 Corinthians 10:31</cite>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
       (function () {
         const saved = localStorage.getItem('theme');

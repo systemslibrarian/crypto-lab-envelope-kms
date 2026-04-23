@@ -106,6 +106,10 @@ export class KekStore {
     }));
   }
 
+  clear(): void {
+    this.records.clear();
+  }
+
   private mustGetRecord(keyId: string): KekStoreRecord {
     const record = this.records.get(keyId);
     if (!record) throw new Error(`Unknown keyId: ${keyId}`);

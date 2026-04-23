@@ -66,6 +66,15 @@ export class AuditLog {
     this.persist();
   }
 
+  clear(): void {
+    this.entries = [];
+    try {
+      localStorage.removeItem('audit-log-v1');
+    } catch {
+      /* ignore */
+    }
+  }
+
   verify(): { ok: boolean; brokenIndex: number | null } {
     for (let i = 0; i < this.entries.length; i += 1) {
       const entry = this.entries[i];
