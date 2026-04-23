@@ -1,0 +1,38 @@
+{
+  "name": "crypto-lab-envelope-kms",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Envelope encryption lab with KEK/DEK hierarchies and key rotation",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/systemslibrarian/crypto-lab-envelope-kms.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/systemslibrarian/crypto-lab-envelope-kms/issues"
+  },
+  "homepage": "https://github.com/systemslibrarian/crypto-lab-envelope-kms#readme",
+  "dependencies": {
+    "@noble/ciphers": "^2.2.0",
+    "@noble/hashes": "^2.2.0"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9"
+  }
+}

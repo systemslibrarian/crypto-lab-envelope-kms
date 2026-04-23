@@ -1,0 +1,227 @@
+:root {
+  --bg: #0b1722;
+  --panel: #132433;
+  --panel-2: #1a3248;
+  --text: #edf6ff;
+  --muted: #9fc2dd;
+  --edge: #3d5f79;
+  --accent: #9be15d;
+  --accent-2: #00e3ae;
+  --danger: #ff7d7d;
+}
+
+:root[data-theme='light'] {
+  --bg: #f4f8fb;
+  --panel: #ffffff;
+  --panel-2: #e5eef5;
+  --text: #11283d;
+  --muted: #4d6b84;
+  --edge: #bfd0de;
+  --accent: #197b6b;
+  --accent-2: #2f9fd8;
+  --danger: #bf3f3f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in oklab, var(--accent-2) 16%, transparent), transparent 40%),
+    radial-gradient(circle at 100% 10%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 36%),
+    linear-gradient(140deg, var(--bg), color-mix(in oklab, var(--bg) 76%, #041018));
+  min-height: 100vh;
+}
+
+#app {
+  width: min(1200px, 94vw);
+  margin: 0 auto;
+  padding: 1.2rem 0 1.5rem;
+}
+
+.hero {
+  position: relative;
+  padding: 1.2rem 3.4rem 1rem 1.2rem;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: linear-gradient(160deg, var(--panel), color-mix(in oklab, var(--panel-2) 76%, transparent));
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+}
+
+.panel {
+  margin-top: 1rem;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  padding: 1rem;
+}
+
+.controls-row,
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip,
+#theme-toggle {
+  border: 1px solid var(--edge);
+  background: color-mix(in oklab, var(--panel-2) 88%, transparent);
+  color: var(--text);
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+#theme-toggle {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  z-index: 10;
+  font-size: 1.1rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.chip:hover,
+#theme-toggle:hover {
+  border-color: var(--accent-2);
+}
+
+.flow-list {
+  display: grid;
+  gap: 0.6rem;
+  padding-left: 1.2rem;
+}
+
+.flow-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-bottom: 1px dashed var(--edge);
+  padding-bottom: 0.4rem;
+}
+
+.hierarchy-svg,
+.arch-svg {
+  width: 100%;
+  max-width: 100%;
+}
+
+.node-root {
+  fill: color-mix(in oklab, var(--panel-2) 74%, transparent);
+  stroke: var(--edge);
+}
+
+.node-kek {
+  fill: color-mix(in oklab, var(--accent-2) 16%, var(--panel));
+  stroke: var(--accent-2);
+}
+
+.node-text {
+  fill: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.node-subtext {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.edge {
+  stroke: var(--edge);
+  stroke-width: 2;
+}
+
+pre {
+  background: color-mix(in oklab, var(--panel-2) 85%, transparent);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  padding: 0.8rem;
+  overflow-x: auto;
+}
+
+.audit-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.audit-item {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.8rem;
+  margin: 0.7rem 0;
+}
+
+.audit-item.broken {
+  border-left-color: var(--danger);
+}
+
+.timeline li {
+  margin-bottom: 0.4rem;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: auto;
+  display: block;
+}
+
+.comparison-table th,
+.comparison-table td {
+  border: 1px solid var(--edge);
+  padding: 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.citations {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.scripture-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.85rem;
+  border-top: 1px solid var(--edge);
+  color: var(--muted);
+  margin-top: 2rem;
+}
+
+.reality-panel {
+  width: min(1200px, 94vw);
+  margin: 0 auto;
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  padding: 0.9rem 1rem;
+}
+
+.reality-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
+@media (max-width: 780px) {
+  #app {
+    width: 96vw;
+  }
+
+  .flow-list li {
+    flex-direction: column;
+  }
+}
