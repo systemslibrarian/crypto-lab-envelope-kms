@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/systemslibrarian/crypto-lab-envelope-kms/security/advisories/new
+    about: Privately report a security-relevant issue (see SECURITY.md).
+  - name: Crypto Lab Suite
+    url: https://crypto-lab.systemslibrarian.dev/
+    about: Browse the rest of the Crypto Lab demos.

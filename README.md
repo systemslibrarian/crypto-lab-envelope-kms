@@ -1,6 +1,7 @@
 # crypto-lab-envelope-kms
 
 [![CI](https://github.com/systemslibrarian/crypto-lab-envelope-kms/actions/workflows/ci.yml/badge.svg)](https://github.com/systemslibrarian/crypto-lab-envelope-kms/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/systemslibrarian/crypto-lab-envelope-kms/actions/workflows/codeql.yml/badge.svg)](https://github.com/systemslibrarian/crypto-lab-envelope-kms/actions/workflows/codeql.yml)
 [![Pages](https://github.com/systemslibrarian/crypto-lab-envelope-kms/actions/workflows/pages.yml/badge.svg)](https://github.com/systemslibrarian/crypto-lab-envelope-kms/actions/workflows/pages.yml)
 
 ## 1. What It Is

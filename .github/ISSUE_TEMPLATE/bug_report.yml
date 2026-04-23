@@ -1,0 +1,47 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly in the Envelope KMS Lab.
+title: '[bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! Please fill in as much as you can. The lab is a teaching demo, so reproducible steps help a lot.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the unexpected behavior.
+      placeholder: When I clicked Rotate KEK, the audit log showed...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the live demo
+        2. Click "Create KEK"
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Browser + OS
+      placeholder: Chrome 124 on macOS 14.4
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Anything red in the browser devtools console?
+      render: shell
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true

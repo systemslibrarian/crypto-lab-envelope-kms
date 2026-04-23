@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest a new scenario, demo, or capability for the Envelope KMS Lab.
+title: '[feature] '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: What would you like to learn or demonstrate?
+      placeholder: I'd like to see a scenario that shows...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: How might this look in the UI or API? Sketches welcome.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This stays inside the educational scope (no real-key handling, no new external services).
+          required: true
