@@ -8,7 +8,10 @@ const FLOWS: Record<string, FlowLine[]> = {
   ],
   Encrypt: [
     { step: 'Client: AES-256-GCM encrypt plaintext under DEK', bytes: 'iv=12B tag=16B' },
-    { step: 'Client -> Storage: ciphertext + wrappedDEK + kekId/version', bytes: 'object payload + 64B envelope' },
+    {
+      step: 'Client -> Storage: ciphertext + wrappedDEK + kekId/version',
+      bytes: 'object payload + 64B envelope',
+    },
   ],
   Decrypt: [
     { step: 'Client -> Storage: read envelope', bytes: 'request varies' },

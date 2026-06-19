@@ -12,6 +12,7 @@ Envelope encryption is the operational layer of modern cryptographic architectur
 - A **KMS-style API surface** (`CreateKey`, `GenerateDataKey`, `Encrypt`, `Decrypt`, `ReEncrypt`, `RotateKey`, `ScheduleKeyDeletion`).
 - **Versioned KEK rotation** with `active`, `decrypt-only`, and `pending-deletion` states.
 - A **SHA-256 hash-chained audit log** with a tamper-detection demo.
+- A **"Try to Break It" security lab** — one-click experiments that run the _real_ primitives and attempt to defeat each guarantee (wrong AAD, tampered ciphertext, cross-tenant unwrap, corrupted key wrap, rotation), so the properties are demonstrated rather than asserted.
 
 The security model assumes KEKs never leave a trust boundary and that the audit log is append-only.
 
@@ -27,7 +28,7 @@ The security model assumes KEKs never leave a trust boundary and that the audit 
 
 → https://systemslibrarian.github.io/crypto-lab-envelope-kms/
 
-Users can generate KEKs, seal and open envelopes, rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, and tamper with the audit log to see the hash chain detect it.
+Users can generate KEKs, seal and open envelopes, rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, tamper with the audit log to see the hash chain detect it, and run the security-properties experiments to watch the crypto reject every attack.
 
 ## 4. How to Run Locally
 
@@ -70,4 +71,4 @@ See [SECURITY.md](./SECURITY.md) for what's real vs. simulated, and [CONTRIBUTIN
 
 ---
 
-*"Whether you eat or drink, or whatever you do, do all to the glory of God." — 1 Corinthians 10:31*
+_"Whether you eat or drink, or whatever you do, do all to the glory of God." — 1 Corinthians 10:31_

@@ -12,10 +12,7 @@ const ICON_DARK = '☾';
 function applyToggleIcon(button: HTMLButtonElement): void {
   const isLight = document.documentElement.classList.contains('light');
   button.textContent = isLight ? ICON_DARK : ICON_LIGHT;
-  button.setAttribute(
-    'aria-label',
-    isLight ? 'Switch to dark mode' : 'Switch to light mode',
-  );
+  button.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
 }
 
 const toggleButton = document.querySelector<HTMLButtonElement>('#themeToggle');

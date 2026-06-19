@@ -9,7 +9,13 @@ export async function open(envelope: EnvelopeRecord): Promise<Uint8Array> {
     { wrappedDEK: envelope.wrappedDEK, kekId: envelope.kekId, kekVersion: envelope.kekVersion },
     'open',
   );
-  const plaintext = await aeadOpen(envelope.ciphertext, envelope.iv, envelope.tag, plaintextDEK, envelope.aad);
+  const plaintext = await aeadOpen(
+    envelope.ciphertext,
+    envelope.iv,
+    envelope.tag,
+    plaintextDEK,
+    envelope.aad,
+  );
   zeroize(plaintextDEK);
   auditLog.append({
     operation: 'Open',

@@ -30,7 +30,7 @@ export default tseslint.config(
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
       'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
-      'eqeqeq': ['error', 'always', { null: 'ignore' }],
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
     },
   },
   {

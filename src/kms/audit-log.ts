@@ -6,7 +6,7 @@ const STORAGE_KEY = 'audit-log-v1';
 function safeStorage(): Storage | null {
   try {
     return typeof globalThis !== 'undefined' && 'localStorage' in globalThis
-      ? (globalThis as { localStorage?: Storage }).localStorage ?? null
+      ? ((globalThis as { localStorage?: Storage }).localStorage ?? null)
       : null;
   } catch {
     return null;
@@ -64,7 +64,9 @@ export type AuditEntry = {
 function canonicalize(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map((v) => canonicalize(v)).join(',')}]`;
-  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
   return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalize(v)}`).join(',')}}`;
 }
 

@@ -62,7 +62,9 @@ describe('AuditLog', () => {
   it('survives a missing localStorage (Node environment)', () => {
     delete (globalThis as { localStorage?: Storage }).localStorage;
     const log = new AuditLog();
-    expect(() => log.append({ operation: 'CreateKey', principal: 'x', success: true })).not.toThrow();
+    expect(() =>
+      log.append({ operation: 'CreateKey', principal: 'x', success: true }),
+    ).not.toThrow();
     expect(log.list().length).toBeGreaterThan(0);
     expect(log.verify().ok).toBe(true);
   });

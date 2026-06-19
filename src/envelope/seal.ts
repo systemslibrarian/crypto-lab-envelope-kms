@@ -13,8 +13,16 @@ export type EnvelopeRecord = {
   aad: Uint8Array;
 };
 
-export async function seal(plaintext: Uint8Array, keyId: string, aad: Uint8Array): Promise<EnvelopeRecord> {
-  const { plaintextDEK, wrappedDEK, kekId, kekVersion } = await kmsApi.GenerateDataKey(keyId, 32, 'seal');
+export async function seal(
+  plaintext: Uint8Array,
+  keyId: string,
+  aad: Uint8Array,
+): Promise<EnvelopeRecord> {
+  const { plaintextDEK, wrappedDEK, kekId, kekVersion } = await kmsApi.GenerateDataKey(
+    keyId,
+    32,
+    'seal',
+  );
   const { ciphertext, iv, tag } = await aeadSeal(plaintext, plaintextDEK, aad);
   zeroize(plaintextDEK);
   auditLog.append({

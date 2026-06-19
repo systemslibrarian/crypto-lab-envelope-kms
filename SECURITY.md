@@ -16,15 +16,15 @@ All primitives are validated against the RFC test vectors at startup (see `src/c
 
 ## Known limitations vs. a real KMS
 
-| Concern                    | Production KMS                                  | This demo                          |
-| -------------------------- | ----------------------------------------------- | ---------------------------------- |
-| Root KEK boundary          | HSM (FIPS 140-3 L3+)                            | Module-scoped, in-process memory   |
-| KEK material at rest       | Sealed in HSM, never exported                   | `Uint8Array` in `KekStore`         |
-| DEK lifetime               | Zeroized on memory free                         | Zeroized via `bytes.zeroize()` ASAP |
-| Audit log durability       | Append-only, signed, off-host                   | `localStorage` (tamperable on purpose, for the demo) |
-| Access control             | IAM policies, key grants, condition keys        | Module boundary only               |
-| Multi-region replication   | Cryptographically-bound replicas                | Simulated in one runtime           |
-| Side-channel resistance    | Constant-time HSM operations                    | Best-effort JS (e.g. `equalBytes`) |
+| Concern                  | Production KMS                           | This demo                                            |
+| ------------------------ | ---------------------------------------- | ---------------------------------------------------- |
+| Root KEK boundary        | HSM (FIPS 140-3 L3+)                     | Module-scoped, in-process memory                     |
+| KEK material at rest     | Sealed in HSM, never exported            | `Uint8Array` in `KekStore`                           |
+| DEK lifetime             | Zeroized on memory free                  | Zeroized via `bytes.zeroize()` ASAP                  |
+| Audit log durability     | Append-only, signed, off-host            | `localStorage` (tamperable on purpose, for the demo) |
+| Access control           | IAM policies, key grants, condition keys | Module boundary only                                 |
+| Multi-region replication | Cryptographically-bound replicas         | Simulated in one runtime                             |
+| Side-channel resistance  | Constant-time HSM operations             | Best-effort JS (e.g. `equalBytes`)                   |
 
 ## Reporting an issue
 

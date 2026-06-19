@@ -13,20 +13,20 @@ npm run dev      # http://localhost:5173
 
 ## Scripts
 
-| Script                | Purpose                                                 |
-| --------------------- | ------------------------------------------------------- |
-| `npm run dev`         | Vite dev server with HMR                                |
-| `npm run build`       | `tsc -b` typecheck + `vite build` to `dist/`            |
-| `npm run preview`     | Preview the production build                            |
-| `npm run typecheck`   | TypeScript only, no emit                                |
-| `npm run test`        | Run Vitest once                                         |
-| `npm run test:watch`  | Vitest in watch mode                                    |
-| `npm run test:coverage` | Run Vitest with V8 coverage report                    |
-| `npm run lint`        | ESLint over the repo                                    |
-| `npm run lint:fix`    | ESLint with `--fix`                                     |
-| `npm run format`      | Prettier write                                          |
-| `npm run format:check` | Prettier check (CI-friendly)                           |
-| `npm run ci`          | typecheck + lint + test + build (mirrors CI)            |
+| Script                  | Purpose                                      |
+| ----------------------- | -------------------------------------------- |
+| `npm run dev`           | Vite dev server with HMR                     |
+| `npm run build`         | `tsc -b` typecheck + `vite build` to `dist/` |
+| `npm run preview`       | Preview the production build                 |
+| `npm run typecheck`     | TypeScript only, no emit                     |
+| `npm run test`          | Run Vitest once                              |
+| `npm run test:watch`    | Vitest in watch mode                         |
+| `npm run test:coverage` | Run Vitest with V8 coverage report           |
+| `npm run lint`          | ESLint over the repo                         |
+| `npm run lint:fix`      | ESLint with `--fix`                          |
+| `npm run format`        | Prettier write                               |
+| `npm run format:check`  | Prettier check (CI-friendly)                 |
+| `npm run ci`            | typecheck + lint + test + build (mirrors CI) |
 
 ## Project layout
 

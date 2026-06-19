@@ -52,10 +52,9 @@ export function renderHierarchyView(keys: KekMetadata[], envelopes: EnvelopeReco
   const keyNodes = keys
     .map((k, i) => {
       const y = kekStartY + i * kekRowH;
-      const activeVersion = k.versions.find((v) => v.status === 'active')?.version ?? k.versions[0]?.version ?? 1;
-      const versionsText = k.versions
-        .map((v) => `v${v.version}·${v.status}`)
-        .join('  ');
+      const activeVersion =
+        k.versions.find((v) => v.status === 'active')?.version ?? k.versions[0]?.version ?? 1;
+      const versionsText = k.versions.map((v) => `v${v.version}·${v.status}`).join('  ');
       const label = truncate(escapeText(k.keyId), 32);
       return `
         <line x1="${rootCenterX}" y1="${rootY + rootHeight}" x2="${rootCenterX}" y2="${y + 18}" class="edge" />

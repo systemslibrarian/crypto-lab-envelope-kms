@@ -22,15 +22,30 @@ export class KmsApi {
   async CreateKey(spec = 'AES256', principal = 'app'): Promise<{ keyId: string; version: number }> {
     try {
       const created = kekStore.createKey(spec);
-      auditLog.append({ operation: 'CreateKey', principal, keyId: created.keyId, kekVersion: created.version, success: true });
+      auditLog.append({
+        operation: 'CreateKey',
+        principal,
+        keyId: created.keyId,
+        kekVersion: created.version,
+        success: true,
+      });
       return created;
     } catch (error) {
-      auditLog.append({ operation: 'CreateKey', principal, success: false, details: String(error) });
+      auditLog.append({
+        operation: 'CreateKey',
+        principal,
+        success: false,
+        details: String(error),
+      });
       throw error;
     }
   }
 
-  async GenerateDataKey(keyId: string, keyLength = 32, principal = 'app'): Promise<DataKeyResponse> {
+  async GenerateDataKey(
+    keyId: string,
+    keyLength = 32,
+    principal = 'app',
+  ): Promise<DataKeyResponse> {
     try {
       if (keyLength !== 32) throw new Error('This demo supports 256-bit DEKs only');
       const plaintextDEK = crypto.getRandomValues(new Uint8Array(keyLength));
@@ -46,12 +61,21 @@ export class KmsApi {
       });
       return { plaintextDEK, wrappedDEK, kekId: keyId, kekVersion: version };
     } catch (error) {
-      auditLog.append({ operation: 'GenerateDataKey', principal, keyId, success: false, details: String(error) });
+      auditLog.append({
+        operation: 'GenerateDataKey',
+        principal,
+        keyId,
+        success: false,
+        details: String(error),
+      });
       throw error;
     }
   }
 
-  async Encrypt(input: { plaintext: Uint8Array; keyId: string; aad?: Uint8Array }, principal = 'app'): Promise<EncryptResponse> {
+  async Encrypt(
+    input: { plaintext: Uint8Array; keyId: string; aad?: Uint8Array },
+    principal = 'app',
+  ): Promise<EncryptResponse> {
     try {
       const aad = input.aad ?? new Uint8Array();
       const dataKey = await this.GenerateDataKey(input.keyId, 32, principal);
@@ -65,9 +89,23 @@ export class KmsApi {
         success: true,
         details: `kms Encrypt ciphertext=${ciphertext.length}`,
       });
-      return { ciphertext, iv, tag, aad, wrappedDEK: dataKey.wrappedDEK, kekId: dataKey.kekId, kekVersion: dataKey.kekVersion };
+      return {
+        ciphertext,
+        iv,
+        tag,
+        aad,
+        wrappedDEK: dataKey.wrappedDEK,
+        kekId: dataKey.kekId,
+        kekVersion: dataKey.kekVersion,
+      };
     } catch (error) {
-      auditLog.append({ operation: 'Seal', principal, keyId: input.keyId, success: false, details: String(error) });
+      auditLog.append({
+        operation: 'Seal',
+        principal,
+        keyId: input.keyId,
+        success: false,
+        details: String(error),
+      });
       throw error;
     }
   }
@@ -99,12 +137,23 @@ export class KmsApi {
   }
 
   async DecryptEnvelope(
-    input: WrappedDekRef & { ciphertext: Uint8Array; iv: Uint8Array; tag: Uint8Array; aad?: Uint8Array },
+    input: WrappedDekRef & {
+      ciphertext: Uint8Array;
+      iv: Uint8Array;
+      tag: Uint8Array;
+      aad?: Uint8Array;
+    },
     principal = 'app',
   ): Promise<Uint8Array> {
     const dek = await this.Decrypt(input, principal);
     try {
-      const plaintext = await aeadOpen(input.ciphertext, input.iv, input.tag, dek, input.aad ?? new Uint8Array());
+      const plaintext = await aeadOpen(
+        input.ciphertext,
+        input.iv,
+        input.tag,
+        dek,
+        input.aad ?? new Uint8Array(),
+      );
       return plaintext;
     } finally {
       dek.fill(0);
@@ -112,11 +161,18 @@ export class KmsApi {
   }
 
   async ReEncrypt(
-    input: { wrappedDEK: Uint8Array; sourceKek: WrappedDekRef; destKek: { keyId: string; version?: number } },
+    input: {
+      wrappedDEK: Uint8Array;
+      sourceKek: WrappedDekRef;
+      destKek: { keyId: string; version?: number };
+    },
     principal = 'app',
   ): Promise<WrappedDekRef> {
     try {
-      const sourceMaterial = kekStore.getMaterialForUnwrap(input.sourceKek.kekId, input.sourceKek.kekVersion);
+      const sourceMaterial = kekStore.getMaterialForUnwrap(
+        input.sourceKek.kekId,
+        input.sourceKek.kekVersion,
+      );
       const plaintext = aesKwUnwrap(sourceMaterial, input.wrappedDEK);
       const destVersion = input.destKek.version ?? kekStore.getCurrentVersion(input.destKek.keyId);
       const destMaterial = kekStore.getMaterialForUnwrap(input.destKek.keyId, destVersion);
@@ -132,7 +188,12 @@ export class KmsApi {
       });
       return { wrappedDEK, kekId: input.destKek.keyId, kekVersion: destVersion };
     } catch (error) {
-      auditLog.append({ operation: 'ReEncrypt', principal, success: false, details: String(error) });
+      auditLog.append({
+        operation: 'ReEncrypt',
+        principal,
+        success: false,
+        details: String(error),
+      });
       throw error;
     }
   }
@@ -140,9 +201,21 @@ export class KmsApi {
   async ScheduleKeyDeletion(keyId: string, windowDays: number, principal = 'app'): Promise<void> {
     try {
       kekStore.scheduleDeletion(keyId, windowDays);
-      auditLog.append({ operation: 'ScheduleKeyDeletion', principal, keyId, success: true, details: `${windowDays} days` });
+      auditLog.append({
+        operation: 'ScheduleKeyDeletion',
+        principal,
+        keyId,
+        success: true,
+        details: `${windowDays} days`,
+      });
     } catch (error) {
-      auditLog.append({ operation: 'ScheduleKeyDeletion', principal, keyId, success: false, details: String(error) });
+      auditLog.append({
+        operation: 'ScheduleKeyDeletion',
+        principal,
+        keyId,
+        success: false,
+        details: String(error),
+      });
       throw error;
     }
   }
@@ -150,10 +223,22 @@ export class KmsApi {
   async RotateKey(keyId: string, principal = 'app'): Promise<{ keyId: string; version: number }> {
     try {
       const rotated = kekStore.rotateKey(keyId);
-      auditLog.append({ operation: 'RotateKey', principal, keyId, kekVersion: rotated.version, success: true });
+      auditLog.append({
+        operation: 'RotateKey',
+        principal,
+        keyId,
+        kekVersion: rotated.version,
+        success: true,
+      });
       return rotated;
     } catch (error) {
-      auditLog.append({ operation: 'RotateKey', principal, keyId, success: false, details: String(error) });
+      auditLog.append({
+        operation: 'RotateKey',
+        principal,
+        keyId,
+        success: false,
+        details: String(error),
+      });
       throw error;
     }
   }

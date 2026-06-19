@@ -8,13 +8,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.ts'],
-      exclude: [
-        'src/main.ts',
-        'src/app.ts',
-        'src/ui/**',
-        'src/**/*.d.ts',
-        'src/**/*.test.ts',
-      ],
+      exclude: ['src/main.ts', 'src/app.ts', 'src/ui/**', 'src/**/*.d.ts', 'src/**/*.test.ts'],
       // Crypto and KMS code carry the security weight — gate them tightly.
       // UI/bootstrap is covered by manual exercise via the live demo.
       thresholds: {

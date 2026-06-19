@@ -37,7 +37,11 @@ export function wrapWithIv3394(kek: Uint8Array, plaintext: Uint8Array, iv: Uint8
   return concatBytes(a, ...r);
 }
 
-export function unwrapWithIv3394(kek: Uint8Array, ciphertext: Uint8Array, iv: Uint8Array): Uint8Array {
+export function unwrapWithIv3394(
+  kek: Uint8Array,
+  ciphertext: Uint8Array,
+  iv: Uint8Array,
+): Uint8Array {
   if (iv.length !== 8) throw new Error('IV must be 64-bit');
   if (ciphertext.length < 24 || ciphertext.length % 8 !== 0) {
     throw new Error('RFC 3394 ciphertext must be at least 24 bytes and 64-bit blocks');
@@ -48,7 +52,10 @@ export function unwrapWithIv3394(kek: Uint8Array, ciphertext: Uint8Array, iv: Ui
   return plaintext;
 }
 
-export function unwrap3394Core(kek: Uint8Array, ciphertext: Uint8Array): { a: Uint8Array; plaintext: Uint8Array } {
+export function unwrap3394Core(
+  kek: Uint8Array,
+  ciphertext: Uint8Array,
+): { a: Uint8Array; plaintext: Uint8Array } {
   if (ciphertext.length < 24 || ciphertext.length % 8 !== 0) {
     throw new Error('RFC 3394 ciphertext must be at least 24 bytes and 64-bit blocks');
   }

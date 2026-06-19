@@ -6,14 +6,21 @@ import { seal, type EnvelopeRecord } from './envelope/seal';
 import { auditLog } from './kms/audit-log';
 import { kmsApi } from './kms/kms-api';
 import { kekStore } from './kms/kek-store';
-import { customerManagedKeysScenario } from './scenarios/customer-managed-keys';
 import { multiRegionScenario } from './scenarios/multi-region';
 import { rotationDrillScenario } from './scenarios/rotation-drill';
 import { singleTenantScenario } from './scenarios/single-tenant';
+import {
+  PROPERTY_IDS,
+  runAllProperties,
+  runProperty,
+  type PropertyId,
+  type PropertyResult,
+} from './security/properties';
 import { renderAuditView } from './ui/audit-view';
 import { renderHierarchyView } from './ui/hierarchy-view';
 import { renderRequestFlow } from './ui/request-flow';
 import { renderRotationPanel } from './ui/rotation-panel';
+import { renderSecurityLab } from './ui/security-lab';
 
 function b64(bytes: Uint8Array): string {
   let out = '';
@@ -26,6 +33,7 @@ type AppState = {
   envelopes: EnvelopeRecord[];
   timeline: string[];
   flow: string;
+  securityResults: Record<string, PropertyResult>;
 };
 
 const state: AppState = {
@@ -33,6 +41,7 @@ const state: AppState = {
   envelopes: [],
   timeline: ['Ready'],
   flow: 'GenerateDataKey',
+  securityResults: {},
 };
 
 function field(label: string, value: string, bytes: number, hint?: string): string {
@@ -161,14 +170,36 @@ function explainers(): string {
 
 function scenariosPanel(): string {
   const presets: Array<{ id: string; title: string; copy: string; tone: string }> = [
-    { id: 'hello', title: 'Hello World', copy: 'Create a KEK, seal a message, decrypt it back. The smallest end-to-end envelope flow.', tone: 'teal' },
-    { id: 'rotation', title: 'Rotation Drill', copy: 'Rotate a KEK to a new version while old envelopes remain readable under the previous version.', tone: 'violet' },
-    { id: 'tenant', title: 'Multi-tenant', copy: 'Two tenants, two KEKs. Verify keys cannot cross the tenant boundary.', tone: 'amber' },
-    { id: 'breach', title: 'Breach Response', copy: 'Rotate, re-wrap existing envelopes, then schedule the compromised version for deletion.', tone: 'crimson' },
+    {
+      id: 'hello',
+      title: 'Hello World',
+      copy: 'Create a KEK, seal a message, decrypt it back. The smallest end-to-end envelope flow.',
+      tone: 'teal',
+    },
+    {
+      id: 'rotation',
+      title: 'Rotation Drill',
+      copy: 'Rotate a KEK to a new version while old envelopes remain readable under the previous version.',
+      tone: 'violet',
+    },
+    {
+      id: 'tenant',
+      title: 'Multi-tenant',
+      copy: 'Two tenants, two KEKs. Verify keys cannot cross the tenant boundary.',
+      tone: 'amber',
+    },
+    {
+      id: 'breach',
+      title: 'Breach Response',
+      copy: 'Rotate, re-wrap existing envelopes, then schedule the compromised version for deletion.',
+      tone: 'crimson',
+    },
   ];
   const cards = presets
     .map(
-      (p) => `<button class="preset-card preset-btn" data-preset="${p.id}" data-tone="${p.tone}" type="button">
+      (
+        p,
+      ) => `<button class="preset-card preset-btn" data-preset="${p.id}" data-tone="${p.tone}" type="button">
         <span class="preset-title">${p.title}</span>
         <span class="preset-copy">${p.copy}</span>
         <span class="preset-cta">Run preset →</span>
@@ -186,7 +217,7 @@ function appMarkup(): string {
   const keys = kekStore.exportMetadata();
   const auditEntries = auditLog.list();
   const auditState = auditLog.verify();
-  const latestKey = state.keyId ?? (keys[0]?.keyId ?? 'none');
+  const latestKey = state.keyId ?? keys[0]?.keyId ?? 'none';
 
   return `
   <section class="hero-main">
@@ -219,6 +250,7 @@ function appMarkup(): string {
   </section>
 
   ${scenariosPanel()}
+  ${renderSecurityLab(state.securityResults)}
   ${explainers()}
   ${architectureDiagram()}
   ${renderHierarchyView(keys, state.envelopes)}
@@ -237,7 +269,11 @@ async function onCreateKey() {
 
 async function onSeal() {
   if (!state.keyId) throw new Error('Create a key first');
-  const envelope = await seal(encoder.encode('Hello envelope world'), state.keyId, encoder.encode('ctx=demo'));
+  const envelope = await seal(
+    encoder.encode('Hello envelope world'),
+    state.keyId,
+    encoder.encode('ctx=demo'),
+  );
   state.envelopes.push(envelope);
   state.timeline.push(`Seal -> ${envelope.kekId}@v${envelope.kekVersion}`);
 }
@@ -273,13 +309,24 @@ async function runPreset(name: string) {
   }
   if (name === 'rotation') {
     const result = await rotationDrillScenario();
-    state.timeline.push(`Preset Rotation -> ${result.keyId} v${result.beforeVersion} to v${result.afterVersion}`);
+    state.timeline.push(
+      `Preset Rotation -> ${result.keyId} v${result.beforeVersion} to v${result.afterVersion}`,
+    );
     return;
   }
   if (name === 'tenant') {
-    await singleTenantScenario();
-    await customerManagedKeysScenario();
-    state.timeline.push('Preset Multi-tenant -> isolated key paths verified');
+    // Two tenants, two KEKs — then *prove* the boundary by trying to unwrap
+    // tenant A's DEK with tenant B's KEK and watching RFC 3394 reject it.
+    const acme = await singleTenantScenario();
+    state.keyId = acme.keyId;
+    state.envelopes.push(acme.envelope);
+    const isolation = await runProperty('tenant-isolation');
+    state.securityResults[isolation.id] = isolation;
+    state.timeline.push(
+      isolation.held
+        ? `Preset Multi-tenant -> cross-tenant unwrap rejected: ${isolation.observed}`
+        : `Preset Multi-tenant -> WARNING isolation failed: ${isolation.observed}`,
+    );
     return;
   }
   if (name === 'breach') {
@@ -295,7 +342,9 @@ async function runPreset(name: string) {
       state.envelopes[state.envelopes.length - 1] = await rewrapEnvelope(latest, state.keyId);
     }
     await kmsApi.ScheduleKeyDeletion(state.keyId, 7, 'breach-response');
-    state.timeline.push(`Preset Breach Response -> rotate to v${rotated.version}, re-wrap, schedule deletion (7 days)`);
+    state.timeline.push(
+      `Preset Breach Response -> rotate to v${rotated.version}, re-wrap, schedule deletion (7 days)`,
+    );
   }
 }
 
@@ -328,23 +377,48 @@ function handleError(err: unknown, context: string): void {
 
 function bind(root: HTMLElement): void {
   root.querySelector('#create-key')?.addEventListener('click', async () => {
-    try { await onCreateKey(); announce(`Created KEK ${state.keyId}`); } catch (err) { handleError(err, 'CreateKey'); }
+    try {
+      await onCreateKey();
+      announce(`Created KEK ${state.keyId}`);
+    } catch (err) {
+      handleError(err, 'CreateKey');
+    }
     render(root);
   });
   root.querySelector('#seal-btn')?.addEventListener('click', async () => {
-    try { await onSeal(); announce('Sealed envelope'); } catch (err) { handleError(err, 'Seal'); }
+    try {
+      await onSeal();
+      announce('Sealed envelope');
+    } catch (err) {
+      handleError(err, 'Seal');
+    }
     render(root);
   });
   root.querySelector('#open-btn')?.addEventListener('click', async () => {
-    try { await onOpen(); announce('Opened latest envelope'); } catch (err) { handleError(err, 'Open'); }
+    try {
+      await onOpen();
+      announce('Opened latest envelope');
+    } catch (err) {
+      handleError(err, 'Open');
+    }
     render(root);
   });
   root.querySelector('#rotate-btn')?.addEventListener('click', async () => {
-    try { await onRotate(); announce('Rotated KEK to new version'); } catch (err) { handleError(err, 'Rotate'); }
+    try {
+      await onRotate();
+      announce('Rotated KEK to new version');
+    } catch (err) {
+      handleError(err, 'Rotate');
+    }
     render(root);
   });
   root.querySelector('#rewrap-btn')?.addEventListener('click', async () => {
-    try { await onRewrap(); announce('Re-wrapped envelope to active version'); } catch (err) { handleError(err, 'Rewrap'); }
+    try {
+      await onRewrap();
+      announce('Re-wrapped envelope to active version');
+    } catch (err) {
+      handleError(err, 'Rewrap');
+    }
     render(root);
   });
   root.querySelector('#reset-btn')?.addEventListener('click', () => {
@@ -352,6 +426,7 @@ function bind(root: HTMLElement): void {
     state.envelopes = [];
     state.timeline = ['Ready'];
     state.flow = 'GenerateDataKey';
+    state.securityResults = {};
     auditLog.clear();
     kekStore.clear();
     announce('Reset — cleared keys, envelopes, and audit log');
@@ -361,9 +436,49 @@ function bind(root: HTMLElement): void {
   root.querySelectorAll<HTMLButtonElement>('.preset-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const preset = btn.dataset.preset ?? 'hello';
-      try { await runPreset(preset); announce(`Ran "${preset}" preset`); } catch (err) { handleError(err, `preset:${preset}`); }
+      try {
+        await runPreset(preset);
+        announce(`Ran "${preset}" preset`);
+      } catch (err) {
+        handleError(err, `preset:${preset}`);
+      }
       render(root);
     });
+  });
+
+  root.querySelectorAll<HTMLButtonElement>('.prop-run-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = (btn.dataset.prop ?? '') as PropertyId;
+      if (!PROPERTY_IDS.includes(id)) return;
+      try {
+        const result = await runProperty(id);
+        state.securityResults[id] = result;
+        announce(
+          result.held ? `Property held: ${result.title}` : `Property BROKEN: ${result.title}`,
+          result.held ? 'info' : 'error',
+        );
+      } catch (err) {
+        handleError(err, `property:${id}`);
+      }
+      render(root);
+    });
+  });
+
+  root.querySelector('#run-all-props')?.addEventListener('click', async () => {
+    try {
+      const results = await runAllProperties();
+      for (const result of results) state.securityResults[result.id] = result;
+      const broken = results.filter((r) => !r.held).length;
+      announce(
+        broken === 0
+          ? `All ${results.length} properties held`
+          : `${broken} of ${results.length} properties BROKEN`,
+        broken === 0 ? 'info' : 'error',
+      );
+    } catch (err) {
+      handleError(err, 'run-all-properties');
+    }
+    render(root);
   });
 
   root.querySelectorAll<HTMLButtonElement>('.flow-btn').forEach((btn) => {
@@ -403,9 +518,31 @@ function bind(root: HTMLElement): void {
   });
 }
 
+/**
+ * A stable CSS selector for the currently focused control, so we can restore
+ * focus after the full re-render below. Without this, every action sends focus
+ * back to <body>, which strands keyboard and screen-reader users (WCAG 2.4.3).
+ */
+function focusSelector(el: Element | null): string | null {
+  if (!(el instanceof HTMLElement) || el === document.body) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  for (const attr of ['data-prop', 'data-preset', 'data-flow', 'data-copy']) {
+    const value = el.getAttribute(attr);
+    if (value !== null) return `[${attr}="${CSS.escape(value)}"]`;
+  }
+  return null;
+}
+
 export function render(root: HTMLElement): void {
+  const selector = focusSelector(document.activeElement);
   root.innerHTML = appMarkup();
   bind(root);
+  if (selector) {
+    const next = root.querySelector<HTMLElement>(selector);
+    // Preserve focus across the re-render; the element may be gone (e.g. after
+    // Reset), in which case we simply leave focus where the browser put it.
+    if (next) next.focus();
+  }
 }
 
 export async function bootstrap(root: HTMLElement): Promise<void> {

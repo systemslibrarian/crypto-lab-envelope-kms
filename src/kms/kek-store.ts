@@ -66,7 +66,9 @@ export class KekStore {
   scheduleDeletion(keyId: string, windowDays: number): void {
     const record = this.mustGetRecord(keyId);
     record.deletionWindowDays = windowDays;
-    record.scheduledDeletionAt = new Date(Date.now() + windowDays * 24 * 60 * 60 * 1000).toISOString();
+    record.scheduledDeletionAt = new Date(
+      Date.now() + windowDays * 24 * 60 * 60 * 1000,
+    ).toISOString();
     for (const v of record.versions) {
       if (v.status === 'active') v.status = 'decrypt-only';
       v.notAfter = record.scheduledDeletionAt;
