@@ -55,6 +55,26 @@ src/
 - Do not add variable-time branches over secret bytes.
 - Prefer the WebCrypto API where it covers the use case; fall back to `@noble/*` only when it does not.
 
+### Changing validation/conformance logic (bounds, length checks, tag/integrity checks)
+
+A comparison operator or boundary in crypto validation is a security control, not a
+detail. Loosening one (e.g. `<=` → `<`) can silently accept malformed inputs while every
+existing test stays green. Before changing any such check:
+
+1. **Cite the exact normative bound.** Quote the RFC clause and the inequality it requires.
+   Example: RFC 5649 §4.2 requires `8·(n−1) < MLI ≤ 8·n`, so padding is 0–7 octets and the
+   unwrap rejection condition is `length <= padded.length - 8` — the `<=` is load-bearing.
+2. **Write a failing-then-passing test.** Add a test that **fails before** your change and
+   **passes after** it. If you cannot construct an input that fails first, the bug you are
+   "fixing" probably does not exist — stop and re-read the spec.
+3. **Add the boundary as a permanent regression test**, not just a local check. See
+   `src/crypto/key-wrap.test.ts` ("rejects a blob declaring 8 padding bytes") for the
+   pattern: craft the malformed input with `wrapWithIv3394` + a hand-built AIV and assert
+   the unwrap throws.
+
+"All tests green" only proves the change broke nothing that was already covered — it does
+not prove the change was correct.
+
 ## Pull requests
 
 1. Fork and create a feature branch.
