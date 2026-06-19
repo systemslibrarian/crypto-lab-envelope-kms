@@ -23,15 +23,28 @@ export async function seal(
     32,
     'seal',
   );
-  const { ciphertext, iv, tag } = await aeadSeal(plaintext, plaintextDEK, aad);
-  zeroize(plaintextDEK);
-  auditLog.append({
-    operation: 'Seal',
-    principal: 'seal',
-    keyId: kekId,
-    kekVersion,
-    success: true,
-    details: `ciphertext=${ciphertext.length}, wrappedDEK=${wrappedDEK.length}`,
-  });
-  return { ciphertext, iv, tag, wrappedDEK, kekId, kekVersion, aad };
+  try {
+    const { ciphertext, iv, tag } = await aeadSeal(plaintext, plaintextDEK, aad);
+    auditLog.append({
+      operation: 'Seal',
+      principal: 'seal',
+      keyId: kekId,
+      kekVersion,
+      success: true,
+      details: `ciphertext=${ciphertext.length}, wrappedDEK=${wrappedDEK.length}`,
+    });
+    return { ciphertext, iv, tag, wrappedDEK, kekId, kekVersion, aad };
+  } catch (error) {
+    auditLog.append({
+      operation: 'Seal',
+      principal: 'seal',
+      keyId: kekId,
+      kekVersion,
+      success: false,
+      details: String(error),
+    });
+    throw error;
+  } finally {
+    zeroize(plaintextDEK);
+  }
 }

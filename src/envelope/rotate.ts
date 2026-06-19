@@ -6,32 +6,43 @@ export async function rewrapEnvelope(
   envelope: EnvelopeRecord,
   destinationKeyId: string,
 ): Promise<EnvelopeRecord> {
-  const rewrapped = await kmsApi.ReEncrypt(
-    {
-      wrappedDEK: envelope.wrappedDEK,
-      sourceKek: {
+  try {
+    const rewrapped = await kmsApi.ReEncrypt(
+      {
         wrappedDEK: envelope.wrappedDEK,
-        kekId: envelope.kekId,
-        kekVersion: envelope.kekVersion,
+        sourceKek: {
+          wrappedDEK: envelope.wrappedDEK,
+          kekId: envelope.kekId,
+          kekVersion: envelope.kekVersion,
+        },
+        destKek: { keyId: destinationKeyId },
       },
-      destKek: { keyId: destinationKeyId },
-    },
-    'rotate',
-  );
+      'rotate',
+    );
 
-  auditLog.append({
-    operation: 'RewrapEnvelope',
-    principal: 'rotate',
-    keyId: destinationKeyId,
-    kekVersion: rewrapped.kekVersion,
-    success: true,
-    details: `rewrapped from ${envelope.kekId}@v${envelope.kekVersion}`,
-  });
+    auditLog.append({
+      operation: 'RewrapEnvelope',
+      principal: 'rotate',
+      keyId: destinationKeyId,
+      kekVersion: rewrapped.kekVersion,
+      success: true,
+      details: `rewrapped from ${envelope.kekId}@v${envelope.kekVersion}`,
+    });
 
-  return {
-    ...envelope,
-    wrappedDEK: rewrapped.wrappedDEK,
-    kekId: rewrapped.kekId,
-    kekVersion: rewrapped.kekVersion,
-  };
+    return {
+      ...envelope,
+      wrappedDEK: rewrapped.wrappedDEK,
+      kekId: rewrapped.kekId,
+      kekVersion: rewrapped.kekVersion,
+    };
+  } catch (error) {
+    auditLog.append({
+      operation: 'RewrapEnvelope',
+      principal: 'rotate',
+      keyId: destinationKeyId,
+      success: false,
+      details: String(error),
+    });
+    throw error;
+  }
 }
