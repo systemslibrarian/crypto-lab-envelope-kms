@@ -11,6 +11,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --bg: #071016;
   --bg-soft: #0b1821;
   --panel: rgba(8, 18, 25, 0.88);
@@ -32,6 +33,7 @@
 }
 
 html.light {
+  color-scheme: light;
   --bg: #f4f6f8;
   --bg-soft: #eaecf0;
   --panel: rgba(255, 255, 255, 0.92);
@@ -39,18 +41,22 @@ html.light {
   --border: rgba(60, 80, 100, 0.16);
   --border-strong: rgba(60, 80, 100, 0.28);
   --text: #3a4a58;
-  --text-dim: #6b7f8e;
+  /* Dim/accent hues darkened for WCAG AA (>=4.5:1) on the near-white panels. */
+  --text-dim: #5f7382;
   --text-hi: #1a2530;
-  --teal: #1aab94;
+  --teal: #0f7a68;
   --teal-soft: rgba(26, 171, 148, 0.1);
-  --amber: #c87a00;
-  --crimson: #d44058;
+  --amber: #9a6700;
+  --crimson: #c22e46;
   --violet: #6b5ce7;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
 }
 
 html {
   scroll-behavior: smooth;
+  /* Explicit canvas color: WebKit reports body->canvas propagation as
+     transparent, which breaks automated contrast checks. */
+  background-color: var(--bg);
 }
 
 body {
@@ -112,7 +118,9 @@ a {
   left: 0.5rem;
   z-index: 9999;
   padding: 0.5rem 1rem;
-  background: var(--teal);
+  /* Fixed pair (not --teal): the light theme's darker teal would drop the
+     dark ink below 4.5:1. This pair passes AA in both themes. */
+  background-color: #35d6bb;
   color: #071016;
   font-weight: 700;
   text-decoration: none;
@@ -132,14 +140,14 @@ a {
   justify-content: space-between;
   gap: 14px;
   padding: 12px 20px;
-  background: #0e1f1e;
+  background-color: #0e1f1e;
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid #2a4a44;
 }
 
 html.light .cl-header {
-  background: #0e1f1e; /* keep dark — matches reference site exactly */
+  background-color: #0e1f1e; /* keep dark — matches reference site exactly */
   border-bottom-color: #2a4a44;
 }
 
@@ -165,7 +173,7 @@ html.light .cl-header {
 .cl-badge {
   width: 36px;
   height: 36px;
-  background: #162b2a;
+  background-color: #162b2a;
   border: 1px solid #2a4a44;
   border-radius: 6px;
   display: flex;
@@ -199,12 +207,10 @@ html.light .cl-header {
   color: #4dcfb0;
   letter-spacing: 1px;
   font-family: monospace;
-  opacity: 0.8;
   text-decoration: none;
 }
 
 .cl-sub:hover {
-  opacity: 1;
   text-decoration: underline;
 }
 
@@ -224,7 +230,7 @@ html.light .cl-header {
   letter-spacing: 1px;
   text-transform: uppercase;
   color: #4dcfb0;
-  background: #162b2a;
+  background-color: #162b2a;
   border: 1px solid #2a4a44;
   border-radius: 6px;
   text-decoration: none;
@@ -235,14 +241,14 @@ html.light .cl-header {
 }
 
 .cl-nav-btn:hover {
-  background: #1e3c3a;
+  background-color: #1e3c3a;
   border-color: #4dcfb0;
 }
 
 .cl-theme-toggle {
   width: 36px;
   height: 36px;
-  background: #162b2a;
+  background-color: #162b2a;
   border: 1px solid #2a4a44;
   border-radius: 6px;
   display: flex;
@@ -258,7 +264,7 @@ html.light .cl-header {
 }
 
 .cl-theme-toggle:hover {
-  background: #1e3c3a;
+  background-color: #1e3c3a;
   border-color: #4dcfb0;
 }
 
@@ -312,7 +318,7 @@ html.light .hero-main {
   content: '';
   width: 34px;
   height: 1px;
-  background: currentColor;
+  background-color: currentColor;
 }
 
 .hero-main h1 {
@@ -366,7 +372,7 @@ html.light .hero-main {
   content: '';
   width: 5px;
   height: 5px;
-  background: var(--teal);
+  background-color: var(--teal);
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -376,7 +382,7 @@ html.light .hero-main {
   position: relative;
   padding: 26px;
   border: 1px solid var(--border);
-  background: var(--panel);
+  background-color: var(--panel);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--shadow);
@@ -452,7 +458,7 @@ html.light .hero-main {
   font-size: 11px;
   font-weight: 500;
   font-family: var(--mono);
-  background: rgba(8, 17, 24, 0.78);
+  background-color: rgba(8, 17, 24, 0.78);
   cursor: pointer;
   transition:
     border-color 0.18s ease,
@@ -465,20 +471,20 @@ html.light .hero-main {
 }
 
 html.light .chip {
-  background: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .chip:hover {
   border-color: var(--teal);
   color: var(--teal);
-  background: var(--teal-soft);
+  background-color: var(--teal-soft);
 }
 
 .chip.active,
 .chip[aria-pressed='true'] {
   border-color: var(--teal);
   color: var(--teal);
-  background: var(--teal-soft);
+  background-color: var(--teal-soft);
 }
 
 .chip:disabled,
@@ -502,7 +508,7 @@ summary:focus-visible,
 
 /* ── Code blocks ───────────────────────────────────────────────────────── */
 pre {
-  background: rgba(7, 16, 22, 0.7);
+  background-color: rgba(7, 16, 22, 0.7);
   border: 1px solid var(--border-strong);
   padding: 14px 16px;
   overflow-x: auto;
@@ -513,7 +519,7 @@ pre {
 }
 
 html.light pre {
-  background: rgba(0, 0, 0, 0.04);
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .bytes-legend {
@@ -529,7 +535,7 @@ html.light pre {
 .bytes-legend li {
   padding: 4px 10px;
   border: 1px solid var(--border);
-  background: rgba(8, 17, 24, 0.5);
+  background-color: rgba(8, 17, 24, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -633,7 +639,7 @@ html.light pre {
 .audit-item {
   border-left: 2px solid var(--teal);
   padding: 10px 14px;
-  background: rgba(53, 214, 187, 0.04);
+  background-color: rgba(53, 214, 187, 0.04);
   font-size: 12px;
 }
 
@@ -655,7 +661,7 @@ html.light pre {
 
 .audit-item.broken {
   border-left-color: var(--crimson);
-  background: rgba(255, 107, 127, 0.08);
+  background-color: rgba(255, 107, 127, 0.08);
 }
 
 .audit-item.broken::before {
@@ -677,7 +683,7 @@ html.light pre {
 .timeline li {
   padding: 8px 12px;
   border-left: 2px solid var(--border-strong);
-  background: rgba(7, 16, 22, 0.4);
+  background-color: rgba(7, 16, 22, 0.4);
   font-family: var(--mono);
 }
 
@@ -702,7 +708,7 @@ html.light pre {
 }
 
 .comparison-table thead th {
-  background: rgba(53, 214, 187, 0.06);
+  background-color: rgba(53, 214, 187, 0.06);
   color: var(--text-hi);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -713,7 +719,7 @@ html.light pre {
 .comparison-table tbody th {
   color: var(--text-hi);
   font-weight: 500;
-  background: rgba(7, 16, 22, 0.4);
+  background-color: rgba(7, 16, 22, 0.4);
 }
 
 .citations {
@@ -740,7 +746,7 @@ html.light pre {
 .reality-panel {
   padding: 22px 26px;
   border: 1px solid var(--border);
-  background: var(--panel);
+  background-color: var(--panel);
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow);
 }
@@ -953,7 +959,7 @@ html.light .footer-quote {
 .empty-state {
   padding: 28px 20px;
   border: 1px dashed var(--border-strong);
-  background: rgba(53, 214, 187, 0.04);
+  background-color: rgba(53, 214, 187, 0.04);
   text-align: center;
   display: grid;
   gap: 6px;
@@ -961,7 +967,7 @@ html.light .footer-quote {
 }
 
 html.light .empty-state {
-  background: rgba(26, 171, 148, 0.06);
+  background-color: rgba(26, 171, 148, 0.06);
 }
 
 .empty-title {
@@ -991,14 +997,14 @@ html.light .empty-state {
 
 .insp-field {
   border: 1px solid var(--border);
-  background: rgba(7, 16, 22, 0.5);
+  background-color: rgba(7, 16, 22, 0.5);
   padding: 12px 14px;
   display: grid;
   gap: 8px;
 }
 
 html.light .insp-field {
-  background: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 .insp-field-head {
@@ -1038,13 +1044,13 @@ html.light .insp-field {
   color: var(--text);
   word-break: break-all;
   line-height: 1.55;
-  background: rgba(0, 0, 0, 0.18);
+  background-color: rgba(0, 0, 0, 0.18);
   padding: 8px 10px;
   border: 1px solid var(--border);
 }
 
 html.light .insp-value {
-  background: rgba(0, 0, 0, 0.04);
+  background-color: rgba(0, 0, 0, 0.04);
   color: var(--text-hi);
 }
 
@@ -1128,7 +1134,7 @@ html.light .insp-value {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: currentColor;
+  background-color: currentColor;
   box-shadow: 0 0 0 3px color-mix(in oklab, currentColor 22%, transparent);
 }
 
@@ -1155,14 +1161,14 @@ html.light .insp-value {
 .audit-item {
   border: 1px solid var(--border);
   border-left: 2px solid var(--teal);
-  background: rgba(7, 16, 22, 0.55);
+  background-color: rgba(7, 16, 22, 0.55);
   padding: 12px 14px;
   display: grid;
   gap: 8px;
 }
 
 html.light .audit-item {
-  background: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
 .audit-item header {
@@ -1199,13 +1205,13 @@ html.light .audit-item {
 .audit-result.ok {
   color: var(--teal);
   border-color: var(--teal);
-  background: rgba(53, 214, 187, 0.08);
+  background-color: rgba(53, 214, 187, 0.08);
 }
 
 .audit-result.fail {
   color: var(--crimson);
   border-color: var(--crimson);
-  background: rgba(255, 107, 127, 0.08);
+  background-color: rgba(255, 107, 127, 0.08);
 }
 
 .audit-item header time {
@@ -1254,7 +1260,7 @@ html.light .audit-item {
 
 .audit-item.broken {
   border-left-color: var(--crimson);
-  background: rgba(255, 107, 127, 0.08);
+  background-color: rgba(255, 107, 127, 0.08);
 }
 
 .audit-item.broken::before {
@@ -1268,7 +1274,7 @@ html.light .audit-item {
 
 /* ── Light-mode contrast tightening ────────────────────────────────────── */
 html.light .timeline li {
-  background: rgba(255, 255, 255, 0.75);
+  background-color: rgba(255, 255, 255, 0.75);
   color: var(--text-hi);
   border-left-color: rgba(60, 80, 100, 0.35);
 }
@@ -1278,15 +1284,15 @@ html.light .timeline li:first-child {
 }
 
 html.light .bytes-legend li {
-  background: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 html.light .comparison-table thead th {
-  background: rgba(26, 171, 148, 0.1);
+  background-color: rgba(26, 171, 148, 0.1);
 }
 
 html.light .comparison-table tbody th {
-  background: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 /* ── Panel lede / status badges ────────────────────────────────────────── */
@@ -1305,17 +1311,18 @@ html.light .comparison-table tbody th {
   padding: 10px 14px;
   margin-bottom: 14px;
   border: 1px solid var(--border);
-  background: rgba(7, 16, 22, 0.55);
+  background-color: rgba(7, 16, 22, 0.55);
   font-size: 12px;
 }
 
 html.light .key-status {
-  background: rgba(255, 255, 255, 0.75);
+  background-color: rgba(255, 255, 255, 0.75);
 }
 
 .key-status[data-state='empty'] {
+  /* Dashed border alone signals the empty state — no opacity dimming, which
+     would drop the label text below 4.5:1 in the light theme. */
   border-style: dashed;
-  opacity: 0.85;
 }
 
 .key-status-label {
@@ -1352,7 +1359,7 @@ html.light .key-status {
   border-style: solid;
   border-color: var(--crimson);
   color: var(--crimson);
-  background: rgba(255, 107, 127, 0.08);
+  background-color: rgba(255, 107, 127, 0.08);
 }
 
 /* ── Scenario preset cards ─────────────────────────────────────────────── */
@@ -1369,7 +1376,7 @@ html.light .key-status {
   padding: 18px 18px 16px;
   text-align: left;
   border: 1px solid var(--border);
-  background: rgba(7, 16, 22, 0.55);
+  background-color: rgba(7, 16, 22, 0.55);
   color: var(--text);
   cursor: pointer;
   font-family: var(--mono);
@@ -1381,7 +1388,7 @@ html.light .key-status {
 }
 
 html.light .preset-card {
-  background: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
 .preset-card::before {
@@ -1389,7 +1396,7 @@ html.light .preset-card {
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: var(--accent, var(--teal));
+  background-color: var(--accent, var(--teal));
 }
 
 .preset-card[data-tone='teal'] {
@@ -1408,11 +1415,11 @@ html.light .preset-card {
 .preset-card:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  background: rgba(7, 16, 22, 0.85);
+  background-color: rgba(7, 16, 22, 0.85);
 }
 
 html.light .preset-card:hover {
-  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .preset-title {
@@ -1453,12 +1460,12 @@ html.light .preset-card:hover {
   align-content: start;
   padding: 16px 16px 16px 19px;
   border: 1px solid var(--border);
-  background: rgba(7, 16, 22, 0.55);
+  background-color: rgba(7, 16, 22, 0.55);
   overflow: hidden;
 }
 
 html.light .prop-card {
-  background: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
 .prop-card::before {
@@ -1466,7 +1473,7 @@ html.light .prop-card {
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: var(--accent, var(--teal));
+  background-color: var(--accent, var(--teal));
 }
 
 .prop-card[data-tone='teal'] {
@@ -1522,11 +1529,11 @@ html.light .prop-card {
   padding: 12px;
   border: 1px solid var(--border);
   border-left: 3px solid var(--teal);
-  background: rgba(8, 17, 24, 0.6);
+  background-color: rgba(8, 17, 24, 0.6);
 }
 
 html.light .prop-result {
-  background: rgba(0, 0, 0, 0.03);
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 .prop-result.held {
@@ -1611,7 +1618,7 @@ html.light .prop-result {
   padding: 12px 16px;
   border: 1px solid var(--border-strong);
   border-left: 3px solid var(--teal);
-  background: rgba(8, 18, 25, 0.96);
+  background-color: rgba(8, 18, 25, 0.96);
   backdrop-filter: blur(12px);
   color: var(--text-hi);
   font-family: var(--mono);
@@ -1626,7 +1633,7 @@ html.light .prop-result {
 }
 
 html.light .toast {
-  background: rgba(255, 255, 255, 0.98);
+  background-color: rgba(255, 255, 255, 0.98);
   color: var(--text-hi);
 }
 
