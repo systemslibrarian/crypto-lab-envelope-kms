@@ -32,7 +32,7 @@
   --radius: 2px;
 }
 
-html.light {
+html[data-theme='light'] {
   color-scheme: light;
   --bg: #f4f6f8;
   --bg-soft: #eaecf0;
@@ -72,7 +72,7 @@ body {
     linear-gradient(180deg, #081016 0%, #071016 50%, #060d13 100%);
 }
 
-html.light body {
+html[data-theme='light'] body {
   background: linear-gradient(180deg, #f4f6f8 0%, #eef1f4 50%, #e8ecf0 100%);
 }
 
@@ -89,7 +89,7 @@ body::before {
   z-index: 0;
 }
 
-html.light body::before {
+html[data-theme='light'] body::before {
   background-image:
     linear-gradient(rgba(60, 80, 100, 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(60, 80, 100, 0.07) 1px, transparent 1px);
@@ -146,7 +146,7 @@ a {
   border-bottom: 1px solid #2a4a44;
 }
 
-html.light .cl-header {
+html[data-theme='light'] .cl-header {
   background-color: #0e1f1e; /* keep dark — matches reference site exactly */
   border-bottom-color: #2a4a44;
 }
@@ -297,7 +297,7 @@ html.light .cl-header {
   overflow: hidden;
 }
 
-html.light .hero-main {
+html[data-theme='light'] .hero-main {
   background:
     linear-gradient(145deg, rgba(26, 171, 148, 0.06), transparent 30%), rgba(255, 255, 255, 0.88);
 }
@@ -470,7 +470,7 @@ html.light .hero-main {
   min-width: 44px;
 }
 
-html.light .chip {
+html[data-theme='light'] .chip {
   background-color: rgba(255, 255, 255, 0.8);
 }
 
@@ -518,7 +518,7 @@ pre {
   color: var(--text);
 }
 
-html.light pre {
+html[data-theme='light'] pre {
   background-color: rgba(0, 0, 0, 0.04);
 }
 
@@ -820,7 +820,7 @@ html.light pre {
   flex-wrap: wrap;
 }
 
-html.light .footer-quote {
+html[data-theme='light'] .footer-quote {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.78));
 }
 
@@ -966,7 +966,7 @@ html.light .footer-quote {
   justify-items: center;
 }
 
-html.light .empty-state {
+html[data-theme='light'] .empty-state {
   background-color: rgba(26, 171, 148, 0.06);
 }
 
@@ -1003,7 +1003,7 @@ html.light .empty-state {
   gap: 8px;
 }
 
-html.light .insp-field {
+html[data-theme='light'] .insp-field {
   background-color: rgba(255, 255, 255, 0.7);
 }
 
@@ -1049,7 +1049,7 @@ html.light .insp-field {
   border: 1px solid var(--border);
 }
 
-html.light .insp-value {
+html[data-theme='light'] .insp-value {
   background-color: rgba(0, 0, 0, 0.04);
   color: var(--text-hi);
 }
@@ -1167,7 +1167,7 @@ html.light .insp-value {
   gap: 8px;
 }
 
-html.light .audit-item {
+html[data-theme='light'] .audit-item {
   background-color: rgba(255, 255, 255, 0.85);
 }
 
@@ -1273,25 +1273,25 @@ html.light .audit-item {
 }
 
 /* ── Light-mode contrast tightening ────────────────────────────────────── */
-html.light .timeline li {
+html[data-theme='light'] .timeline li {
   background-color: rgba(255, 255, 255, 0.75);
   color: var(--text-hi);
   border-left-color: rgba(60, 80, 100, 0.35);
 }
 
-html.light .timeline li:first-child {
+html[data-theme='light'] .timeline li:first-child {
   border-left-color: var(--teal);
 }
 
-html.light .bytes-legend li {
+html[data-theme='light'] .bytes-legend li {
   background-color: rgba(255, 255, 255, 0.7);
 }
 
-html.light .comparison-table thead th {
+html[data-theme='light'] .comparison-table thead th {
   background-color: rgba(26, 171, 148, 0.1);
 }
 
-html.light .comparison-table tbody th {
+html[data-theme='light'] .comparison-table tbody th {
   background-color: rgba(255, 255, 255, 0.7);
 }
 
@@ -1315,7 +1315,7 @@ html.light .comparison-table tbody th {
   font-size: 12px;
 }
 
-html.light .key-status {
+html[data-theme='light'] .key-status {
   background-color: rgba(255, 255, 255, 0.75);
 }
 
@@ -1387,7 +1387,7 @@ html.light .key-status {
   overflow: hidden;
 }
 
-html.light .preset-card {
+html[data-theme='light'] .preset-card {
   background-color: rgba(255, 255, 255, 0.85);
 }
 
@@ -1418,7 +1418,7 @@ html.light .preset-card {
   background-color: rgba(7, 16, 22, 0.85);
 }
 
-html.light .preset-card:hover {
+html[data-theme='light'] .preset-card:hover {
   background-color: #ffffff;
 }
 
@@ -1464,7 +1464,7 @@ html.light .preset-card:hover {
   overflow: hidden;
 }
 
-html.light .prop-card {
+html[data-theme='light'] .prop-card {
   background-color: rgba(255, 255, 255, 0.85);
 }
 
@@ -1532,7 +1532,7 @@ html.light .prop-card {
   background-color: rgba(8, 17, 24, 0.6);
 }
 
-html.light .prop-result {
+html[data-theme='light'] .prop-result {
   background-color: rgba(0, 0, 0, 0.03);
 }
 
@@ -1632,7 +1632,7 @@ html.light .prop-result {
     transform 0.22s ease;
 }
 
-html.light .toast {
+html[data-theme='light'] .toast {
   background-color: rgba(255, 255, 255, 0.98);
   color: var(--text-hi);
 }

@@ -42,7 +42,7 @@
     <script>
       (function () {
         if (localStorage.getItem('theme') === 'light') {
-          document.documentElement.classList.add('light');
+          document.documentElement.setAttribute('data-theme', 'light');
         }
       })();
     </script>

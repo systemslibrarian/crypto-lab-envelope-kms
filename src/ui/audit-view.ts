@@ -31,7 +31,7 @@ export function renderAuditView(
       <span class="audit-count">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</span>
       <button id="tamper-btn" class="chip" type="button">Tamper Entry #1</button>
     </div>
-    <div class="audit-list" role="list">
+    <div class="audit-list" role="list" tabindex="0" aria-label="Audit log entries, scrollable">
       ${entries
         .slice()
         .reverse()

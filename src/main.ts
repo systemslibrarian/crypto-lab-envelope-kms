@@ -10,7 +10,7 @@ const ICON_LIGHT = '☀';
 const ICON_DARK = '☾';
 
 function applyToggleIcon(button: HTMLButtonElement): void {
-  const isLight = document.documentElement.classList.contains('light');
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   button.textContent = isLight ? ICON_DARK : ICON_LIGHT;
   button.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
 }
@@ -19,8 +19,10 @@ const toggleButton = document.querySelector<HTMLButtonElement>('#themeToggle');
 if (toggleButton) {
   applyToggleIcon(toggleButton);
   toggleButton.addEventListener('click', () => {
-    const next = document.documentElement.classList.toggle('light');
-    localStorage.setItem('theme', next ? 'light' : 'dark');
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const next = isLight ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
     applyToggleIcon(toggleButton);
   });
 }
