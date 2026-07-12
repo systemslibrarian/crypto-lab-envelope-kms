@@ -220,17 +220,17 @@ function appMarkup(): string {
   const latestKey = state.keyId ?? keys[0]?.keyId ?? 'none';
 
   return `
-  <section class="hero-main">
-    <span class="eyebrow">Crypto Lab · Key Management</span>
-    <h1>Envelope <span>KMS</span> Lab</h1>
-    <p class="hero-copy">The operational crypto layer — DEK/KEK hierarchies, RFC 3394 key wrap, versioned rotation, and hash-chained audit logging. How AWS KMS, Google Cloud KMS, Azure Key Vault, and HashiCorp Vault work under the hood.</p>
-    <div class="hero-stack" aria-label="Topics covered">
-      <span class="tag">AES Key Wrap · RFC 3394</span>
-      <span class="tag">Envelope Encryption</span>
-      <span class="tag">Key Rotation</span>
-      <span class="tag">Audit Chain</span>
+  <header class="cl-hero">
+    <div class="cl-hero-main">
+      <h1 class="cl-hero-title">Envelope KMS</h1>
+      <p class="cl-hero-sub">DEK/KEK/root-KEK hierarchy · AES Key Wrap · RFC 3394</p>
+      <p class="cl-hero-desc">Build a KEK, seal payloads into DEK-wrapped envelopes, rotate keys with decrypt-only states, and watch the hash-chained audit log verify or break.</p>
     </div>
-  </section>
+    <aside class="cl-hero-why" aria-label="Why it matters">
+      <span class="cl-hero-why-label">WHY IT MATTERS</span>
+      <p class="cl-hero-why-text">This is how AWS, GCP, Azure, and Vault KMS work under the hood. Getting the key hierarchy, rotation, and tamper-evident audit right is what keeps a breach of one layer from decrypting everything.</p>
+    </aside>
+  </header>
 
   <section class="panel controls" aria-labelledby="ops-heading">
     <h2 id="ops-heading">Envelope Operations</h2>

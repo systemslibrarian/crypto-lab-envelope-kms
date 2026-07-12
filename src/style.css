@@ -286,96 +286,74 @@ html[data-theme='light'] .cl-header {
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────────── */
-.hero-main {
-  position: relative;
-  padding: 36px;
-  border: 1px solid var(--border);
-  background:
-    linear-gradient(145deg, rgba(53, 214, 187, 0.07), transparent 30%),
-    linear-gradient(180deg, rgba(8, 17, 24, 0.92), rgba(8, 17, 24, 0.82));
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-html[data-theme='light'] .hero-main {
-  background:
-    linear-gradient(145deg, rgba(26, 171, 148, 0.06), transparent 30%), rgba(255, 255, 255, 0.88);
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 22px;
-  color: var(--amber);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 11px;
-  font-family: var(--mono);
-}
-
-.eyebrow::before {
-  content: '';
-  width: 34px;
-  height: 1px;
-  background-color: currentColor;
-}
-
-.hero-main h1 {
-  max-width: 16ch;
-  font-family: var(--serif);
-  font-size: clamp(2.6rem, 6.5vw, 5.2rem);
-  font-weight: 500;
-  line-height: 0.98;
-  color: var(--text-hi);
-  letter-spacing: -0.04em;
-  text-wrap: balance;
-}
-
-.hero-main h1 span {
-  color: var(--teal);
-  font-style: italic;
-}
-
-.hero-copy {
-  max-width: 64ch;
-  margin-top: 22px;
-  color: var(--text);
-  font-size: 14px;
-}
-
-.hero-stack {
-  margin-top: 26px;
+/* BEGIN cl-hero standard — managed, keep in sync across fleet */
+/* Fleet accent maps to this lab's teal (the default --accent used per-card). */
+.cl-hero {
+  --accent: var(--teal);
   display: flex;
-  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(1rem, 4vw, 3rem);
   flex-wrap: wrap;
+  margin: clamp(1rem, 3vw, 2rem) 0 1.5rem;
 }
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+.cl-hero-main {
+  flex: 1 1 22rem;
+  min-width: min(100%, 20rem);
+}
+.cl-hero-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.8vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--text-hi);
+}
+.cl-hero-sub {
+  margin: 0.4rem 0 0;
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  letter-spacing: 0.01em;
   color: var(--text-dim);
-  background: transparent;
+  opacity: 0.85;
+}
+.cl-hero-desc {
+  margin: 0.55rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: 60ch;
+}
+.cl-hero-why {
+  flex: 0 1 min(40%, 26rem);
+  min-width: min(100%, 15rem);
   border: 1px solid var(--border);
-  border-radius: 0;
-  cursor: default;
+  border-radius: 10px;
+  padding: 0.85rem 1.05rem;
+  background: color-mix(in oklab, var(--accent) 6%, transparent);
 }
-
-.tag::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  background-color: var(--teal);
-  border-radius: 50%;
-  flex-shrink: 0;
+.cl-hero-why-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
 }
+.cl-hero-why-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+@media (max-width: 640px) {
+  .cl-hero {
+    flex-direction: column;
+  }
+  .cl-hero-why {
+    flex-basis: auto;
+    width: 100%;
+  }
+}
+/* END cl-hero standard */
 
 /* ── Panels ─────────────────────────────────────────────────────────────── */
 .panel {
@@ -854,7 +832,7 @@ html[data-theme='light'] .footer-quote {
 }
 
 .cl-header,
-.hero-main,
+.cl-hero,
 .panel,
 .reality-panel,
 .footer-quote {
@@ -863,7 +841,7 @@ html[data-theme='light'] .footer-quote {
 
 @media (prefers-reduced-motion: reduce) {
   .cl-header,
-  .hero-main,
+  .cl-hero,
   .panel,
   .reality-panel,
   .footer-quote {
@@ -909,15 +887,10 @@ html[data-theme='light'] .footer-quote {
     font-size: 10px;
   }
 
-  .hero-main,
   .panel,
   .reality-panel,
   .footer-quote {
     padding: 22px;
-  }
-
-  .hero-main h1 {
-    font-size: clamp(2.2rem, 12vw, 3.8rem);
   }
 
   .table-scroll-hint {
@@ -945,7 +918,6 @@ html[data-theme='light'] .footer-quote {
     font-size: 13px;
   }
 
-  .hero-main,
   .panel {
     padding: 18px;
   }
