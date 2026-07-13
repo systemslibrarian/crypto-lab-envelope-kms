@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as aead from '../crypto/aead';
 import { encoder, decoder } from '../crypto/bytes';
 import { open } from './open';
 import { rewrapEnvelope } from './rotate';
@@ -63,5 +64,27 @@ describe('envelope round-trip', () => {
 
     const tampered = { ...env, kekId: b.keyId };
     await expect(open(tampered)).rejects.toThrow();
+  });
+
+  it('seal audits a failure when the AEAD layer throws, then rethrows', async () => {
+    const { keyId } = await kmsApi.CreateKey('AES256', 'test');
+    const spy = vi.spyOn(aead, 'aeadSeal').mockRejectedValueOnce(new Error('aead exploded'));
+    try {
+      await expect(seal(encoder.encode('x'), keyId, encoder.encode('a'))).rejects.toThrow(
+        'aead exploded',
+      );
+      const failed = auditLog.list().find((e) => e.operation === 'Seal' && !e.success);
+      expect(failed).toBeTruthy();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('rewrapEnvelope audits a failure and rethrows when the destination KEK is missing', async () => {
+    const { keyId } = await kmsApi.CreateKey('AES256', 'test');
+    const env = await seal(encoder.encode('data'), keyId, encoder.encode('a'));
+    await expect(rewrapEnvelope(env, 'no-such-kek')).rejects.toThrow();
+    const failed = auditLog.list().find((e) => e.operation === 'RewrapEnvelope' && !e.success);
+    expect(failed).toBeTruthy();
   });
 });

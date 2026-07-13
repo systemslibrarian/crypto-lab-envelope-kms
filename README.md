@@ -8,11 +8,14 @@
 
 Envelope encryption is the operational layer of modern cryptographic architecture — a data encryption key (DEK) encrypts data; a key encryption key (KEK) encrypts DEKs; a root KEK encrypts KEKs. This demo implements:
 
+- A **plain-language primer** that grounds DEK, KEK, and root-KEK in the paper-key / safe / vault analogy before any acronym is reused, so the hierarchy is defined up front rather than assumed.
+- A **"Watch the wrap" visualizer** that replays a real seal step-by-step: a random 32-byte DEK is drawn, used to AES-256-GCM-encrypt your data, wrapped under the KEK, and then its plaintext copy is zeroized on screen. Every hex value shown is the actual value computed in the browser.
+- An **interactive seal** — type your own plaintext and context/AAD, then use **Open as a different tenant** to watch the real AES-GCM tag refuse to open your envelope under a mismatched context.
 - **RFC 3394** AES Key Wrap and **RFC 5649** padded Key Wrap, validated against the official test vectors.
 - A **KMS-style API surface** (`CreateKey`, `GenerateDataKey`, `Encrypt`, `Decrypt`, `ReEncrypt`, `RotateKey`, `ScheduleKeyDeletion`).
 - **Versioned KEK rotation** with `active`, `decrypt-only`, and `pending-deletion` states.
-- A **SHA-256 hash-chained audit log** with a tamper-detection demo.
-- A **"Try to Break It" security lab** — one-click experiments that run the _real_ primitives and attempt to defeat each guarantee (wrong AAD, tampered ciphertext, cross-tenant unwrap, corrupted key wrap, rotation), so the properties are demonstrated rather than asserted.
+- A **SHA-256 hash-chained audit log** with a tamper-detection demo that highlights the exact digest byte that changed and draws the broken link between an entry's hash and the next entry's `prev_hash`.
+- A **"Try to Break It" security lab** — one-click experiments that run the _real_ primitives and attempt to defeat each guarantee (wrong AAD, tampered ciphertext, cross-tenant unwrap, corrupted key wrap, rotation), so the properties are demonstrated rather than asserted. It sits behind a **"Ready to go deeper?"** disclosure so the page opens with intuition and layers the attacks on top.
 
 The security model assumes KEKs never leave a trust boundary and that the audit log is append-only.
 
@@ -28,7 +31,7 @@ The security model assumes KEKs never leave a trust boundary and that the audit 
 
 **[systemslibrarian.github.io/crypto-lab-envelope-kms](https://systemslibrarian.github.io/crypto-lab-envelope-kms/)**
 
-Users can generate KEKs, seal and open envelopes, rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, tamper with the audit log to see the hash chain detect it, and run the security-properties experiments to watch the crypto reject every attack.
+Users can read the primer, generate KEKs, type their own plaintext and context, seal and watch the DEK be drawn / used / wrapped / zeroized in the "Watch the wrap" panel, open envelopes (and try to open them as a different tenant and watch the AAD binding refuse), rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, tamper with the audit log to see the hash chain detect it, and — under "Ready to go deeper?" — run the security-properties experiments to watch the crypto reject every attack.
 
 ## What Can Go Wrong
 
@@ -88,6 +91,6 @@ See [SECURITY.md](./SECURITY.md) for what's real vs. simulated, and [CONTRIBUTIN
 
 ---
 
-*One of 120+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
+_One of 120+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite._
 
-*"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
+_"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31_

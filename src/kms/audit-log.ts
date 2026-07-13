@@ -110,15 +110,58 @@ export class AuditLog {
   }
 
   verify(): { ok: boolean; brokenIndex: number | null } {
+    const detail = this.verifyDetail();
+    return { ok: detail.ok, brokenIndex: detail.brokenIndex };
+  }
+
+  /**
+   * Like verify(), but also returns WHY the chain broke — whether the entry's own
+   * hash no longer matches its content, or its prev_hash no longer matches the
+   * previous entry's hash — plus the recomputed hash so the UI can show exactly
+   * which bytes stopped matching. This makes the append-only guarantee visible.
+   */
+  verifyDetail(): {
+    ok: boolean;
+    brokenIndex: number | null;
+    reason: 'content-hash' | 'prev-link' | null;
+    storedHash: string | null;
+    recomputedHash: string | null;
+    expectedPrev: string | null;
+  } {
     for (let i = 0; i < this.entries.length; i += 1) {
       const entry = this.entries[i];
       const expectedPrev = i === 0 ? 'GENESIS' : this.entries[i - 1].hash;
-      if (entry.prev_hash !== expectedPrev) return { ok: false, brokenIndex: i };
+      if (entry.prev_hash !== expectedPrev) {
+        return {
+          ok: false,
+          brokenIndex: i,
+          reason: 'prev-link',
+          storedHash: entry.hash,
+          recomputedHash: entry.hash,
+          expectedPrev,
+        };
+      }
       const { hash: _hash, ...payload } = entry;
       const recomputed = hashEntry(payload);
-      if (recomputed !== entry.hash) return { ok: false, brokenIndex: i };
+      if (recomputed !== entry.hash) {
+        return {
+          ok: false,
+          brokenIndex: i,
+          reason: 'content-hash',
+          storedHash: entry.hash,
+          recomputedHash: recomputed,
+          expectedPrev,
+        };
+      }
     }
-    return { ok: true, brokenIndex: null };
+    return {
+      ok: true,
+      brokenIndex: null,
+      reason: null,
+      storedHash: null,
+      recomputedHash: null,
+      expectedPrev: null,
+    };
   }
 
   private persist(): void {

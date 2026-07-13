@@ -1627,3 +1627,349 @@ html[data-theme='light'] .toast {
     max-width: none;
   }
 }
+
+/* ── Jargon gloss (dotted-underline tooltip) ───────────────────────────── */
+.gloss {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: help;
+  font-variant: inherit;
+  /* underline color from the accent so it reads as an interactive hint */
+  text-decoration-color: var(--teal);
+}
+.gloss:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Primer ────────────────────────────────────────────────────────────── */
+.primer-lede {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  max-width: 74ch;
+}
+.primer-lede em {
+  color: var(--text-hi);
+  font-style: normal;
+  font-weight: 500;
+}
+.primer-defs {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+  display: grid;
+  gap: 10px;
+}
+.primer-defs li {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--teal);
+  background-color: rgba(53, 214, 187, 0.05);
+}
+html[data-theme='light'] .primer-defs li {
+  background-color: rgba(26, 171, 148, 0.07);
+}
+.primer-term {
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--teal);
+  letter-spacing: 0.04em;
+}
+.primer-def {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.primer-def strong {
+  color: var(--text-hi);
+  font-weight: 500;
+}
+.primer-foot {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+@media (max-width: 560px) {
+  .primer-defs li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* ── Wrap visualizer ───────────────────────────────────────────────────── */
+.wrap-steps {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  display: grid;
+  gap: 12px;
+  counter-reset: none;
+}
+.wrap-step {
+  position: relative;
+  padding: 14px 16px 14px 18px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--teal);
+  background-color: rgba(7, 16, 22, 0.5);
+  display: grid;
+  gap: 6px;
+  /* staggered entrance so the sequence reads step 1 → 4 */
+  animation: wrap-in 0.42s ease both;
+}
+html[data-theme='light'] .wrap-step {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+.wrap-step[data-step='2'] {
+  animation-delay: 0.14s;
+}
+.wrap-step[data-step='3'] {
+  animation-delay: 0.28s;
+}
+.wrap-step[data-step='4'] {
+  animation-delay: 0.42s;
+  border-left-color: var(--crimson);
+}
+@keyframes wrap-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap-step {
+    animation: none;
+  }
+}
+.wrap-step-caption {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 500;
+}
+.wrap-step-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-hi);
+}
+.wrap-step-body {
+  display: grid;
+  gap: 6px;
+}
+.wrap-hex {
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-hi);
+  word-break: break-all;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+html[data-theme='light'] .wrap-hex {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.wrap-hex.dek {
+  border-color: var(--teal);
+}
+.wrap-hex.wrapped {
+  border-color: var(--violet);
+}
+.wrap-hex.zeroized {
+  text-decoration: line-through;
+  text-decoration-color: var(--crimson);
+  text-decoration-thickness: 2px;
+  color: var(--text-dim);
+  border-color: var(--crimson);
+}
+.wrap-note {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.wrap-foot {
+  margin-top: 14px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* ── Interactive seal inputs ───────────────────────────────────────────── */
+.seal-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+@media (max-width: 560px) {
+  .seal-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+.seal-field {
+  display: grid;
+  gap: 5px;
+}
+.seal-field-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--teal);
+  font-weight: 500;
+}
+.seal-input {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-hi);
+  background-color: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border-strong);
+  padding: 9px 11px;
+  min-height: 44px;
+}
+html[data-theme='light'] .seal-input {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+.seal-input:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
+  border-color: var(--teal);
+}
+.seal-input::placeholder {
+  color: var(--text-dim);
+}
+.seal-hint {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  max-width: 74ch;
+}
+.seal-hint strong {
+  color: var(--text-hi);
+}
+
+/* ── Cross-tenant result (in operations panel) ─────────────────────────── */
+.cross-tenant-result {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--teal);
+  background-color: rgba(8, 17, 24, 0.6);
+}
+html[data-theme='light'] .cross-tenant-result {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+.cross-tenant-result.broken {
+  border-left-color: var(--crimson);
+}
+.cross-tenant-observed {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-hi);
+  word-break: break-word;
+}
+
+/* ── "Ready to go deeper?" expander ────────────────────────────────────── */
+.deeper-details {
+  margin-top: 4px;
+}
+.deeper-details > summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 500;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  background-color: rgba(53, 214, 187, 0.06);
+  list-style: none;
+}
+html[data-theme='light'] .deeper-details > summary {
+  background-color: rgba(26, 171, 148, 0.08);
+}
+.deeper-details > summary::-webkit-details-marker {
+  display: none;
+}
+.deeper-details > summary::before {
+  content: '▸ ';
+}
+.deeper-details[open] > summary::before {
+  content: '▾ ';
+}
+.deeper-body {
+  display: grid;
+  gap: 22px;
+  margin-top: 18px;
+}
+/* Nested panels inside the expander drop their own outer chrome so they read as
+   one grouped disclosure rather than floating cards. */
+.deeper-body > .panel {
+  box-shadow: none;
+}
+
+/* ── Audit chain-break visual ──────────────────────────────────────────── */
+.chain-break {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--crimson);
+  border-left: 3px solid var(--crimson);
+  background-color: rgba(255, 107, 127, 0.08);
+  display: grid;
+  gap: 6px;
+}
+.chain-break-head {
+  font-weight: 700;
+  color: var(--crimson);
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+.chain-break-body {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text);
+  margin: 0;
+}
+.chain-break-body code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.audit-hash.recomputed {
+  color: var(--text-hi);
+}
+mark.hash-diff {
+  /* Fixed dark-red bg + white text so the highlighted byte keeps AA contrast in
+     BOTH themes (the light theme's --crimson is itself dark red). */
+  background-color: #b3122b;
+  color: #ffffff;
+  padding: 0 2px;
+  font-weight: 700;
+  border-radius: 2px;
+}
+.audit-hash.link-broken {
+  color: var(--crimson);
+  font-weight: 700;
+}
+.audit-item.downstream {
+  border-left-color: var(--amber);
+  background-color: rgba(255, 184, 77, 0.08);
+}

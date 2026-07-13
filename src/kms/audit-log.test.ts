@@ -42,6 +42,38 @@ describe('AuditLog', () => {
     expect(result.brokenIndex).toBe(0);
   });
 
+  it('verifyDetail() reports a content-hash break with the recomputed digest', () => {
+    const log = new AuditLog();
+    log.clear();
+    log.append({ operation: 'CreateKey', principal: 'test', success: true });
+    log.append({ operation: 'GenerateDataKey', principal: 'test', success: true });
+    log.tamper(1, 'forged-details');
+    const detail = log.verifyDetail();
+    expect(detail.ok).toBe(false);
+    expect(detail.brokenIndex).toBe(1);
+    expect(detail.reason).toBe('content-hash');
+    // The stored hash and the recomputed hash must actually differ — that is the
+    // whole tamper-evidence property — and both must be present for the UI diff.
+    expect(detail.storedHash).toBeTruthy();
+    expect(detail.recomputedHash).toBeTruthy();
+    expect(detail.recomputedHash).not.toBe(detail.storedHash);
+  });
+
+  it('verifyDetail() reports a clean chain', () => {
+    const log = new AuditLog();
+    log.clear();
+    log.append({ operation: 'CreateKey', principal: 'test', success: true });
+    log.append({ operation: 'GenerateDataKey', principal: 'test', success: true });
+    expect(log.verifyDetail()).toEqual({
+      ok: true,
+      brokenIndex: null,
+      reason: null,
+      storedHash: null,
+      recomputedHash: null,
+      expectedPrev: null,
+    });
+  });
+
   it('clear() empties the log', () => {
     const log = new AuditLog();
     log.append({ operation: 'CreateKey', principal: 'test', success: true });

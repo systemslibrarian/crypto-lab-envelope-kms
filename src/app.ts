@@ -1,8 +1,9 @@
-import { decoder, encoder } from './crypto/bytes';
+import { aeadOpen, aeadSeal } from './crypto/aead';
+import { decoder, encoder, zeroize } from './crypto/bytes';
 import { runRfcVectors } from './crypto/rfc-vectors';
 import { open } from './envelope/open';
 import { rewrapEnvelope } from './envelope/rotate';
-import { seal, type EnvelopeRecord } from './envelope/seal';
+import { type EnvelopeRecord } from './envelope/seal';
 import { auditLog } from './kms/audit-log';
 import { kmsApi } from './kms/kms-api';
 import { kekStore } from './kms/kek-store';
@@ -28,12 +29,66 @@ function b64(bytes: Uint8Array): string {
   return btoa(out);
 }
 
+function hex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * One-line gloss for jargon on first appearance. Renders a dotted-underline term
+ * with an accessible tooltip (native title + aria-label) so newcomers get the
+ * definition on hover/focus without cluttering the page for experts.
+ */
+const GLOSS: Record<string, string> = {
+  DEK: 'DEK — data encryption key: the per-object key that actually encrypts your data.',
+  KEK: 'KEK — key encryption key: a key whose only job is to encrypt (wrap) other keys, never data.',
+  'root-KEK':
+    'root-KEK — the top key, kept inside the HSM; it encrypts the KEKs and never leaves the vault.',
+  AAD: 'AAD — associated data: authenticated but NOT encrypted; it binds context (tenant, purpose) to the ciphertext so a stolen envelope cannot be replayed elsewhere.',
+  iv: 'iv — initialization vector: the 12-byte random nonce AES-GCM needs; unique per message, not secret.',
+  tag: 'tag — the 128-bit AES-GCM authentication tag; any change to ciphertext or AAD makes it fail.',
+  wrappedDEK: 'wrappedDEK — the DEK after being encrypted (wrapped) under the KEK via RFC 3394.',
+};
+
+function gloss(term: string, label = term): string {
+  const def = GLOSS[term];
+  if (!def) return escapeText(label);
+  return `<abbr class="gloss" tabindex="0" title="${escapeAttr(def)}" aria-label="${escapeAttr(def)}">${escapeText(label)}</abbr>`;
+}
+
+/** A real, in-browser snapshot of one seal, captured for the wrap visualizer. */
+type WrapSnapshot = {
+  dekHex: string;
+  ciphertextHex: string;
+  wrappedHex: string;
+  plaintext: string;
+  aad: string;
+  kekId: string;
+  kekVersion: number;
+};
+
 type AppState = {
   keyId: string | null;
   envelopes: EnvelopeRecord[];
   timeline: string[];
   flow: string;
   securityResults: Record<string, PropertyResult>;
+  plaintext: string;
+  context: string;
+  wrap: WrapSnapshot | null;
+  crossTenant: { attempted: boolean; held: boolean; observed: string } | null;
+  deepOpen: boolean;
 };
 
 const state: AppState = {
@@ -42,15 +97,27 @@ const state: AppState = {
   timeline: ['Ready'],
   flow: 'GenerateDataKey',
   securityResults: {},
+  plaintext: 'Hello envelope world',
+  context: 'tenant=acme',
+  wrap: null,
+  crossTenant: null,
+  deepOpen: false,
 };
 
-function field(label: string, value: string, bytes: number, hint?: string): string {
+function field(
+  label: string,
+  value: string,
+  bytes: number,
+  hint?: string,
+  plainName?: string,
+): string {
   const safe = value.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const copyLabel = plainName ?? label;
   return `<div class="insp-field">
     <div class="insp-field-head">
       <span class="insp-label">${label}</span>
       <span class="insp-meta">${bytes}B${hint ? ` · ${hint}` : ''}</span>
-      <button class="insp-copy chip" type="button" data-copy="${safe}" aria-label="Copy ${label}">Copy</button>
+      <button class="insp-copy chip" type="button" data-copy="${safe}" aria-label="Copy ${escapeAttr(copyLabel)}">Copy</button>
     </div>
     <code class="insp-value">${safe}</code>
   </div>`;
@@ -65,11 +132,11 @@ function envelopeInspector(envelopes: EnvelopeRecord[]): string {
   }
   const env = envelopes[envelopes.length - 1];
   return `<div class="insp-grid">
-    ${field('iv', b64(env.iv), env.iv.length, 'AES-GCM nonce')}
-    ${field('tag', b64(env.tag), env.tag.length, 'AEAD auth tag')}
-    ${field('ciphertext', b64(env.ciphertext), env.ciphertext.length)}
-    ${field('wrappedDEK', b64(env.wrappedDEK), env.wrappedDEK.length, 'RFC 3394')}
-    ${field('aad', b64(env.aad), env.aad.length, 'additional data')}
+    ${field(gloss('iv'), b64(env.iv), env.iv.length, 'AES-GCM nonce', 'iv')}
+    ${field(gloss('tag'), b64(env.tag), env.tag.length, 'AEAD auth tag', 'tag')}
+    ${field('ciphertext', b64(env.ciphertext), env.ciphertext.length, undefined, 'ciphertext')}
+    ${field(gloss('wrappedDEK'), b64(env.wrappedDEK), env.wrappedDEK.length, 'RFC 3394', 'wrappedDEK')}
+    ${field(gloss('AAD', 'aad'), b64(env.aad), env.aad.length, 'additional data', 'aad')}
     <div class="insp-field insp-meta-row">
       <div><span class="insp-label">kekId</span><code class="insp-value">${env.kekId}</code></div>
       <div><span class="insp-label">kekVersion</span><code class="insp-value">v${env.kekVersion}</code></div>
@@ -168,6 +235,96 @@ function explainers(): string {
   </section>`;
 }
 
+function primerPanel(): string {
+  return `<section class="panel primer" aria-labelledby="primer-heading">
+    <h2 id="primer-heading">What is envelope encryption?</h2>
+    <p class="primer-lede">You lock your data in a box with a paper key. Instead of guarding a
+      million paper keys, you lock each one inside a small tamper-proof safe that never leaves the
+      vault. That is envelope encryption: encrypt data with a cheap, throwaway key, then encrypt
+      <em>that key</em> under a stronger key you guard closely.</p>
+    <ul class="primer-defs">
+      <li>
+        <span class="primer-term">${gloss('DEK')}</span>
+        <span class="primer-def">the <strong>paper key</strong> — a fresh 32-byte key that encrypts one object's data, then is thrown away.</span>
+      </li>
+      <li>
+        <span class="primer-term">${gloss('KEK')}</span>
+        <span class="primer-def">the <strong>safe</strong> — a key whose only job is to encrypt (wrap) DEKs. It never touches your data.</span>
+      </li>
+      <li>
+        <span class="primer-term">${gloss('root-KEK', 'root-KEK')}</span>
+        <span class="primer-def">the <strong>vault itself</strong> — the top key, kept inside an HSM; it encrypts the KEKs and never leaves.</span>
+      </li>
+    </ul>
+    <p class="primer-foot">So the chain is <strong>data → DEK → KEK → root-KEK</strong>. Only the tiny
+      wrapped keys ever travel to the KMS; the bulk data stays put. Run <strong>Generate + Seal</strong>
+      below to watch a real DEK get created, used, wrapped, and destroyed.</p>
+  </section>`;
+}
+
+/**
+ * The wrap visualizer. Every hex string here is a REAL value computed in-browser
+ * by the last seal (see onSeal): the random DEK, the AES-256-GCM ciphertext, and
+ * the RFC 3394 wrappedDEK. The plaintext DEK is shown once and then struck
+ * through, because the live copy was zeroized the instant the seal completed.
+ */
+function wrapVisualizer(): string {
+  const w = state.wrap;
+  if (!w) {
+    return `<section class="panel wrap-viz" aria-labelledby="wrapviz-heading">
+      <h2 id="wrapviz-heading">Watch the wrap</h2>
+      <div class="empty-state">
+        <p class="empty-title">Nothing sealed yet</p>
+        <p class="empty-copy">Create a KEK, then click <strong>Generate + Seal</strong>. This panel replays the four real steps a KMS performs: draw a DEK, encrypt data, wrap the DEK, and destroy the plaintext DEK.</p>
+      </div>
+    </section>`;
+  }
+  const dekShort = `${w.dekHex.slice(0, 32)}…`;
+  const ctShort = `${w.ciphertextHex.slice(0, 32)}${w.ciphertextHex.length > 32 ? '…' : ''}`;
+  const wrapShort = `${w.wrappedHex.slice(0, 32)}…`;
+  const step = (n: number, title: string, body: string): string =>
+    `<li class="wrap-step" data-step="${n}">
+      <span class="wrap-step-caption">Step ${n}/4</span>
+      <span class="wrap-step-title">${title}</span>
+      <div class="wrap-step-body">${body}</div>
+    </li>`;
+  return `<section class="panel wrap-viz" aria-labelledby="wrapviz-heading">
+    <h2 id="wrapviz-heading">Watch the wrap</h2>
+    <p class="panel-lede">A real replay of the seal you just ran. The ${gloss('DEK')} is used
+      <strong>twice</strong> — once to encrypt your data, once to be wrapped — then its plaintext copy
+      is destroyed. Every hex string below is the actual value your browser computed.</p>
+    <ol class="wrap-steps" aria-label="Seal steps, one through four">
+      ${step(
+        1,
+        `Draw a random 32-byte ${gloss('DEK')}`,
+        `<code class="wrap-hex dek" aria-label="plaintext DEK, 32 bytes">${dekShort}</code>
+         <span class="wrap-note">crypto.getRandomValues(32) — fresh, per object</span>`,
+      )}
+      ${step(
+        2,
+        `Encrypt your data under the DEK (AES-256-GCM)`,
+        `<code class="wrap-hex ct" aria-label="ciphertext">${ctShort}</code>
+         <span class="wrap-note">plaintext "${escapeText(w.plaintext)}" + ${gloss('AAD')} "${escapeText(w.aad)}" → ciphertext + ${gloss('tag')}</span>`,
+      )}
+      ${step(
+        3,
+        `Wrap the SAME DEK under the ${gloss('KEK')} (RFC 3394)`,
+        `<code class="wrap-hex wrapped" aria-label="wrapped DEK">${wrapShort}</code>
+         <span class="wrap-note">${escapeText(w.kekId)}@v${w.kekVersion} wraps the DEK → ${gloss('wrappedDEK')} (40B, 8B longer)</span>`,
+      )}
+      ${step(
+        4,
+        `Zeroize the plaintext DEK`,
+        `<code class="wrap-hex dek zeroized" aria-label="plaintext DEK destroyed">${dekShort}</code>
+         <span class="wrap-note">the live DEK bytes were overwritten with zeros — only the wrapped copy survives</span>`,
+      )}
+    </ol>
+    <p class="wrap-foot">Stored to disk: <strong>ciphertext + tag + wrappedDEK</strong>. Never stored:
+      the plaintext DEK. To read the data later, the KMS unwraps the DEK with the KEK — the one step
+      that requires the vault.</p>
+  </section>`;
+}
+
 function scenariosPanel(): string {
   const presets: Array<{ id: string; title: string; copy: string; tone: string }> = [
     {
@@ -216,7 +373,7 @@ function scenariosPanel(): string {
 function appMarkup(): string {
   const keys = kekStore.exportMetadata();
   const auditEntries = auditLog.list();
-  const auditState = auditLog.verify();
+  const auditState = auditLog.verifyDetail();
   const latestKey = state.keyId ?? keys[0]?.keyId ?? 'none';
 
   return `
@@ -232,6 +389,9 @@ function appMarkup(): string {
     </aside>
   </header>
 
+  ${primerPanel()}
+  ${architectureDiagram()}
+
   <section class="panel controls" aria-labelledby="ops-heading">
     <h2 id="ops-heading">Envelope Operations</h2>
     <div class="key-status" data-state="${latestKey === 'none' ? 'empty' : 'ready'}">
@@ -239,26 +399,62 @@ function appMarkup(): string {
       <code class="key-status-value">${latestKey}</code>
       <span class="key-status-meta">${state.envelopes.length} envelope${state.envelopes.length === 1 ? '' : 's'}</span>
     </div>
+    <div class="seal-inputs">
+      <label class="seal-field">
+        <span class="seal-field-label">Plaintext to seal</span>
+        <input id="plaintext-input" class="seal-input" type="text" value="${escapeAttr(state.plaintext)}" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Type any message…" />
+      </label>
+      <label class="seal-field">
+        <span class="seal-field-label">Context / ${gloss('AAD')}</span>
+        <input id="context-input" class="seal-input" type="text" value="${escapeAttr(state.context)}" maxlength="64" autocomplete="off" spellcheck="false" placeholder="tenant=acme" />
+      </label>
+    </div>
+    <p class="seal-hint">The context becomes the ${gloss('AAD')}: authenticated but not encrypted, and cryptographically bound to this envelope. Change it, seal, then use <strong>Open as different tenant</strong> to watch the math refuse.</p>
     <div class="controls-row">
       <button id="create-key" class="chip" type="button">Create KEK</button>
       <button id="seal-btn" class="chip" type="button" ${latestKey === 'none' ? 'disabled' : ''}>Generate + Seal</button>
       <button id="open-btn" class="chip" type="button" ${state.envelopes.length ? '' : 'disabled'}>Open Latest</button>
+      <button id="open-evil-btn" class="chip" type="button" ${state.envelopes.length ? '' : 'disabled'}>Open as different tenant</button>
       <button id="rotate-btn" class="chip" type="button" ${latestKey === 'none' ? 'disabled' : ''}>Rotate KEK</button>
       <button id="rewrap-btn" class="chip" type="button" ${state.envelopes.length ? '' : 'disabled'}>Re-wrap Latest</button>
       <button id="reset-btn" class="chip ghost" type="button" ${latestKey === 'none' && !state.envelopes.length ? 'disabled' : ''}>Reset</button>
     </div>
+    ${crossTenantResult()}
   </section>
 
+  ${wrapVisualizer()}
   ${scenariosPanel()}
-  ${renderSecurityLab(state.securityResults)}
-  ${explainers()}
-  ${architectureDiagram()}
   ${renderHierarchyView(keys, state.envelopes)}
   <section class="panel"><h2>Envelope Inspector</h2><p class="panel-lede">The on-the-wire payload for the most recently sealed message. Click any field to copy.</p>${envelopeInspector(state.envelopes)}</section>
-  ${renderRequestFlow(state.flow)}
+
+  <section class="panel deeper" aria-labelledby="deeper-heading">
+    <h2 id="deeper-heading">Ready to go deeper?</h2>
+    <p class="panel-lede">Now that you can see the mechanism, put the guarantees under attack. Each experiment runs the <em>real</em> primitives and tries to defeat a property — the crypto refuses in front of you.</p>
+    <details class="deeper-details"${state.deepOpen ? ' open' : ''}>
+      <summary id="deeper-summary">Open the security lab &amp; wire internals</summary>
+      <div class="deeper-body">
+        ${renderSecurityLab(state.securityResults)}
+        ${explainers()}
+        ${renderRequestFlow(state.flow)}
+      </div>
+    </details>
+  </section>
+
   ${renderRotationPanel(state.timeline)}
   ${renderAuditView(auditEntries, auditState)}
   ${comparisonPanel()}`;
+}
+
+function crossTenantResult(): string {
+  const r = state.crossTenant;
+  if (!r) return '';
+  const badge = r.held
+    ? '<span class="prop-badge held"><span aria-hidden="true">✓ </span>Refused</span>'
+    : '<span class="prop-badge broken"><span aria-hidden="true">✕ </span>Opened — binding failed</span>';
+  return `<div class="cross-tenant-result ${r.held ? 'held' : 'broken'}" role="status">
+    ${badge}
+    <p class="cross-tenant-observed">${escapeText(r.observed)}</p>
+  </div>`;
 }
 
 async function onCreateKey() {
@@ -267,15 +463,102 @@ async function onCreateKey() {
   state.timeline.push(`CreateKey -> ${created.keyId}@v${created.version}`);
 }
 
+/**
+ * Instrumented seal — identical cryptography to envelope/seal.ts, but it captures
+ * the REAL intermediate values (the random DEK, the ciphertext, the wrapped DEK)
+ * for the wrap visualizer BEFORE zeroizing the plaintext DEK. Nothing here is
+ * faked: the DEK is drawn by GenerateDataKey, the ciphertext is AES-256-GCM, and
+ * the wrappedDEK is RFC 3394 key wrap. We snapshot hex strings, then destroy the
+ * live key bytes exactly as the production path does.
+ */
 async function onSeal() {
   if (!state.keyId) throw new Error('Create a key first');
-  const envelope = await seal(
-    encoder.encode('Hello envelope world'),
+  const plaintext = state.plaintext.length ? state.plaintext : 'Hello envelope world';
+  const context = state.context;
+  const aadBytes = encoder.encode(context);
+  const { plaintextDEK, wrappedDEK, kekId, kekVersion } = await kmsApi.GenerateDataKey(
     state.keyId,
-    encoder.encode('ctx=demo'),
+    32,
+    'seal',
   );
-  state.envelopes.push(envelope);
-  state.timeline.push(`Seal -> ${envelope.kekId}@v${envelope.kekVersion}`);
+  try {
+    const { ciphertext, iv, tag } = await aeadSeal(
+      encoder.encode(plaintext),
+      plaintextDEK,
+      aadBytes,
+    );
+    // Snapshot the real values while the plaintext DEK is still live.
+    state.wrap = {
+      dekHex: hex(plaintextDEK),
+      ciphertextHex: hex(ciphertext),
+      wrappedHex: hex(wrappedDEK),
+      plaintext,
+      aad: context,
+      kekId,
+      kekVersion,
+    };
+    const envelope: EnvelopeRecord = {
+      ciphertext,
+      iv,
+      tag,
+      wrappedDEK,
+      kekId,
+      kekVersion,
+      aad: aadBytes,
+    };
+    auditLog.append({
+      operation: 'Seal',
+      principal: 'seal',
+      keyId: kekId,
+      kekVersion,
+      success: true,
+      details: `ciphertext=${ciphertext.length}, wrappedDEK=${wrappedDEK.length}`,
+    });
+    state.envelopes.push(envelope);
+    state.crossTenant = null;
+    state.timeline.push(`Seal -> ${envelope.kekId}@v${envelope.kekVersion} (ctx="${context}")`);
+  } finally {
+    // Destroy the live plaintext DEK — only the wrapped copy survives.
+    zeroize(plaintextDEK);
+  }
+}
+
+/**
+ * "Open as a different tenant" — the AAD-binding experiment, run on the learner's
+ * OWN envelope. We unwrap the real DEK via the KMS, then attempt aeadOpen with a
+ * deliberately different context. AES-256-GCM's tag covers the AAD, so the open
+ * throws. This is the real primitive refusing, not a scripted message.
+ */
+async function onOpenAsEvil() {
+  const latest = state.envelopes[state.envelopes.length - 1];
+  if (!latest) return;
+  const sealedContext = decoder.decode(latest.aad);
+  const wrongContext = sealedContext === 'tenant=evil' ? 'tenant=acme' : 'tenant=evil';
+  const dek = await kmsApi.Decrypt(
+    { wrappedDEK: latest.wrappedDEK, kekId: latest.kekId, kekVersion: latest.kekVersion },
+    'open-cross-tenant',
+  );
+  try {
+    await aeadOpen(latest.ciphertext, latest.iv, latest.tag, dek, encoder.encode(wrongContext));
+    state.crossTenant = {
+      attempted: true,
+      held: false,
+      observed: `Opened "${sealedContext}" envelope while claiming "${wrongContext}" — context binding FAILED.`,
+    };
+    state.timeline.push(`Open-as-different-tenant -> WARNING binding failed`);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    state.crossTenant = {
+      attempted: true,
+      held: true,
+      observed: `Claimed context "${wrongContext}" but the envelope was sealed for "${sealedContext}". AES-GCM tag check rejected it: ${msg || 'authentication failed'}.`,
+    };
+    state.timeline.push(
+      `Open-as-different-tenant -> refused (AAD "${wrongContext}" ≠ "${sealedContext}")`,
+    );
+  } finally {
+    zeroize(dek);
+  }
 }
 
 async function onOpen() {
@@ -403,6 +686,35 @@ function bind(root: HTMLElement): void {
     }
     render(root);
   });
+  root.querySelector('#open-evil-btn')?.addEventListener('click', async () => {
+    try {
+      await onOpenAsEvil();
+      announce(
+        state.crossTenant?.held
+          ? 'Refused: wrong context cannot open the envelope'
+          : 'Context binding failed',
+        state.crossTenant?.held ? 'info' : 'error',
+      );
+    } catch (err) {
+      handleError(err, 'OpenAsEvil');
+    }
+    render(root);
+  });
+  const plaintextInput = root.querySelector<HTMLInputElement>('#plaintext-input');
+  if (plaintextInput) {
+    plaintextInput.addEventListener('input', () => {
+      state.plaintext = plaintextInput.value;
+    });
+  }
+  const contextInput = root.querySelector<HTMLInputElement>('#context-input');
+  if (contextInput) {
+    contextInput.addEventListener('input', () => {
+      state.context = contextInput.value;
+    });
+  }
+  root.querySelector<HTMLDetailsElement>('.deeper-details')?.addEventListener('toggle', (e) => {
+    state.deepOpen = (e.currentTarget as HTMLDetailsElement).open;
+  });
   root.querySelector('#rotate-btn')?.addEventListener('click', async () => {
     try {
       await onRotate();
@@ -427,6 +739,8 @@ function bind(root: HTMLElement): void {
     state.timeline = ['Ready'];
     state.flow = 'GenerateDataKey';
     state.securityResults = {};
+    state.wrap = null;
+    state.crossTenant = null;
     auditLog.clear();
     kekStore.clear();
     announce('Reset — cleared keys, envelopes, and audit log');
