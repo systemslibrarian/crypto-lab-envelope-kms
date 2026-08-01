@@ -27,13 +27,13 @@ const RFC3394_VECTORS: Vector[] = [
 
 const RFC5649_VECTORS: Vector[] = [
   {
-    name: 'RFC5649-A.4-40-octets',
+    name: 'RFC5649-6-20-octets',
     kek: '5840df6e29b02af1ab493b705bf16ea1ae8338f4dcc176a8',
     plaintext: 'c37b7e6492584340bed12207808941155068f738',
     ciphertext: '138bdeaa9b8fa7fc61f97742e72248ee5ae6ae5360d1ae6a5f54f373fa543b6a',
   },
   {
-    name: 'RFC5649-A.5-7-octets',
+    name: 'RFC5649-6-7-octets',
     kek: '5840df6e29b02af1ab493b705bf16ea1ae8338f4dcc176a8',
     plaintext: '466f7250617369',
     ciphertext: 'afbeb0f07dfbf5419200f2ccb50bb24f',
