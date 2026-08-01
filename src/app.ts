@@ -15,6 +15,7 @@ import {
   runAllProperties,
   runProperty,
   type PropertyId,
+  type PropertyMode,
   type PropertyResult,
 } from './security/properties';
 import { renderAuditView } from './ui/audit-view';
@@ -764,36 +765,46 @@ function bind(root: HTMLElement): void {
     btn.addEventListener('click', async () => {
       const id = (btn.dataset.prop ?? '') as PropertyId;
       if (!PROPERTY_IDS.includes(id)) return;
+      const mode: PropertyMode = btn.dataset.mode === 'weakened' ? 'weakened' : 'defended';
       try {
-        const result = await runProperty(id);
+        const result = await runProperty(id, mode);
         state.securityResults[id] = result;
+        const build = mode === 'weakened' ? ' (weakened build)' : '';
         announce(
-          result.held ? `Property held: ${result.title}` : `Property BROKEN: ${result.title}`,
+          result.held
+            ? `Property held${build}: ${result.title}`
+            : `Property BROKEN${build}: ${result.title}`,
           result.held ? 'info' : 'error',
         );
       } catch (err) {
-        handleError(err, `property:${id}`);
+        handleError(err, `property:${id}:${mode}`);
       }
       render(root);
     });
   });
 
-  root.querySelector('#run-all-props')?.addEventListener('click', async () => {
+  const runAll = async (mode: PropertyMode): Promise<void> => {
     try {
-      const results = await runAllProperties();
+      const results = await runAllProperties(mode);
       for (const result of results) state.securityResults[result.id] = result;
       const broken = results.filter((r) => !r.held).length;
+      const build = mode === 'weakened' ? ' (weakened build)' : '';
       announce(
         broken === 0
-          ? `All ${results.length} properties held`
-          : `${broken} of ${results.length} properties BROKEN`,
+          ? `All ${results.length} properties held${build}`
+          : `${broken} of ${results.length} properties BROKEN${build}`,
         broken === 0 ? 'info' : 'error',
       );
     } catch (err) {
-      handleError(err, 'run-all-properties');
+      handleError(err, `run-all-properties:${mode}`);
     }
     render(root);
-  });
+  };
+
+  root.querySelector('#run-all-props')?.addEventListener('click', () => void runAll('defended'));
+  root
+    .querySelector('#run-all-props-weakened')
+    ?.addEventListener('click', () => void runAll('weakened'));
 
   root.querySelectorAll<HTMLButtonElement>('.flow-btn').forEach((btn) => {
     btn.addEventListener('click', () => {

@@ -38,5 +38,29 @@ describe('security properties', () => {
     const results = await runAllProperties();
     expect(results).toHaveLength(PROPERTY_IDS.length);
     expect(results.every((r) => r.held)).toBe(true);
+    expect(results.every((r) => r.mode === 'defended')).toBe(true);
+  });
+
+  it('every property is genuinely breakable — the weakened build fails all of them', async () => {
+    // The "Property broken" badge must be reachable. If any weakened experiment
+    // still holds, the lab has a failure state a learner can never observe.
+    const results = await runAllProperties('weakened');
+    expect(results).toHaveLength(PROPERTY_IDS.length);
+    expect(results.filter((r) => r.held).map((r) => r.id)).toEqual([]);
+    expect(results.every((r) => r.mode === 'weakened')).toBe(true);
+  });
+
+  it('each weakened experiment reports what actually happened', async () => {
+    for (const id of PROPERTY_IDS) {
+      const result = await runProperty(id, 'weakened');
+      expect(result.held).toBe(false);
+      expect(result.observed.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('every catalog entry names the defense its weakened run removes', () => {
+    for (const meta of PROPERTY_CATALOG) {
+      expect(meta.weakening.length).toBeGreaterThan(10);
+    }
   });
 });

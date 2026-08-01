@@ -1496,6 +1496,58 @@ html[data-theme='light'] .prop-card {
   margin-top: 2px;
 }
 
+.prop-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* The "remove a defense and run it again" control. Crimson, because pressing it
+   makes the property genuinely break — it is not a second way to pass. */
+.prop-weaken-btn {
+  border-color: var(--crimson);
+  color: var(--crimson);
+}
+
+.prop-weaken-btn:hover {
+  border-color: var(--crimson);
+  color: var(--crimson);
+  background-color: rgba(255, 107, 127, 0.12);
+}
+
+.prop-weakening {
+  color: var(--text-dim);
+}
+
+.prop-weakening strong {
+  color: var(--crimson);
+}
+
+.prop-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Which build produced this result. Without it a red badge is ambiguous — the
+   learner has to know whether the real system failed or the weakened one did. */
+.prop-mode-tag {
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-family: var(--mono);
+  border: 1px dashed currentColor;
+  color: var(--text-dim);
+}
+
+.prop-mode-tag.weakened {
+  color: var(--crimson);
+}
+
 .prop-result {
   display: grid;
   gap: 6px;
