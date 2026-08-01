@@ -9,7 +9,7 @@ describe('RFC 3394 / 5649 vectors', () => {
     expect(runRfcVectors()).toEqual({ ok: true });
   });
 
-  it('RFC 3394 A.1 (128-bit KEK / 128-bit key) wraps to expected bytes', () => {
+  it('RFC 3394 4.1 (128-bit KEK / 128-bit key) wraps to expected bytes', () => {
     const kek = hexToBytes('000102030405060708090A0B0C0D0E0F');
     const pt = hexToBytes('00112233445566778899AABBCCDDEEFF');
     const expected = hexToBytes('1FA68B0A8112B447AEF34BD8FB5A7B829D3E862371D2CFE5');
