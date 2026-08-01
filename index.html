@@ -48,11 +48,6 @@
     </script>
   </head>
   <body>
-    <!-- BEGIN crypto-lab shared header — managed; edit shared-header.html + re-run reapply-header.py
-     Identical on every lab. Self-contained styles. Accents use each demo's own
-     --accent CSS variable (teal #35d6bb fallback). The ONLY per-repo value is the
-     repo name (crypto-lab-envelope-kms) in the GitHub link.
-     Source of truth: github.com/systemslibrarian/crypto-lab/shared-header.html -->
     <style>
       .cl-topbar {
         /* The bar is always dark (#0b1512) regardless of page theme, so header
@@ -289,51 +284,50 @@
         else dedupeBanner();
       })();
     </script>
-    <!-- END crypto-lab shared header -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <main id="main-content" class="wrap">
+    <main id="main-content" class="wrap" tabindex="-1">
       <div id="app"></div>
       <div id="status-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+      <section class="reality-wrap">
+        <details class="reality-panel">
+          <summary>What's Real, What's Simulated</summary>
+          <div class="reality-grid">
+            <div>
+              <h3>Real in this demo</h3>
+              <ul>
+                <li>RFC 3394 AES Key Wrap with byte-exact RFC test vectors.</li>
+                <li>RFC 5649 padded key wrap with byte-exact RFC test vectors.</li>
+                <li>AES-256-GCM sealing via WebCrypto.</li>
+                <li>SHA-256 hash-chained audit log.</li>
+                <li>In-memory DEK zeroization before discard.</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Simulated for browser context</h3>
+              <ul>
+                <li>The KMS is an in-memory module, not an HSM-backed service.</li>
+                <li>Audit entries persist to localStorage rather than a write-once store.</li>
+                <li>Multi-region is represented in one browser runtime.</li>
+                <li>KEK access control is module-boundary scope, not IAM policy.</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Not included (out of scope)</h3>
+              <ul>
+                <li>Quorum-based key ceremonies.</li>
+                <li>FIPS 140-3 certification workflows.</li>
+                <li>KMIP wire protocol.</li>
+                <li>PKCS#11 HSM bindings.</li>
+              </ul>
+            </div>
+          </div>
+        </details>
+      </section>
     </main>
 
     <div id="toast-host" class="toast-host" aria-hidden="true"></div>
-
-    <section class="wrap reality-wrap">
-      <details class="reality-panel">
-        <summary>What's Real, What's Simulated</summary>
-        <div class="reality-grid">
-          <div>
-            <h3>Real in this demo</h3>
-            <ul>
-              <li>RFC 3394 AES Key Wrap with byte-exact RFC test vectors.</li>
-              <li>RFC 5649 padded key wrap with byte-exact RFC test vectors.</li>
-              <li>AES-256-GCM sealing via WebCrypto.</li>
-              <li>SHA-256 hash-chained audit log.</li>
-              <li>In-memory DEK zeroization before discard.</li>
-            </ul>
-          </div>
-          <div>
-            <h3>Simulated for browser context</h3>
-            <ul>
-              <li>The KMS is an in-memory module, not an HSM-backed service.</li>
-              <li>Audit entries persist to localStorage rather than a write-once store.</li>
-              <li>Multi-region is represented in one browser runtime.</li>
-              <li>KEK access control is module-boundary scope, not IAM policy.</li>
-            </ul>
-          </div>
-          <div>
-            <h3>Not included (out of scope)</h3>
-            <ul>
-              <li>Quorum-based key ceremonies.</li>
-              <li>FIPS 140-3 certification workflows.</li>
-              <li>KMIP wire protocol.</li>
-              <li>PKCS#11 HSM bindings.</li>
-            </ul>
-          </div>
-        </div>
-      </details>
-    </section>
 
     <footer class="footer wrap">
       <div class="footer-related">
