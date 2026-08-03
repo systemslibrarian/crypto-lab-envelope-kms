@@ -58,6 +58,15 @@ describe('security properties', () => {
     }
   });
 
+  it('a held result always states its reason, never a dangling "Rejected:"', async () => {
+    // WebCrypto's AES-GCM failure is an OperationError with an empty message on
+    // some engines, which rendered as "Rejected:" followed by nothing at all.
+    for (const result of await runAllProperties()) {
+      expect(result.observed.trim(), result.id).not.toMatch(/Rejected:\s*$/);
+      expect(result.observed.trim().length, result.id).toBeGreaterThan(20);
+    }
+  });
+
   it('every catalog entry names the defense its weakened run removes', () => {
     for (const meta of PROPERTY_CATALOG) {
       expect(meta.weakening.length).toBeGreaterThan(10);

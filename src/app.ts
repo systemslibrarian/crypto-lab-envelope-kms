@@ -371,11 +371,26 @@ function scenariosPanel(): string {
   </section>`;
 }
 
+/**
+ * The KEK the page is actually operating on — and the one the header displays as
+ * "Active KEK". `state.keyId` is only set once the user (or a preset) creates a
+ * key, but the KEK store is already populated by the bootstrap scenario, so
+ * before that the first stored key is the active one.
+ *
+ * Handlers MUST resolve the key through here rather than reading `state.keyId`
+ * directly. While they disagreed, the header advertised an active KEK and
+ * enabled the controls, yet "Generate + Seal" failed with "Create a key first"
+ * and "Rotate KEK" announced success without rotating anything.
+ */
+function activeKeyId(): string | null {
+  return state.keyId ?? kekStore.exportMetadata()[0]?.keyId ?? null;
+}
+
 function appMarkup(): string {
   const keys = kekStore.exportMetadata();
   const auditEntries = auditLog.list();
   const auditState = auditLog.verifyDetail();
-  const latestKey = state.keyId ?? keys[0]?.keyId ?? 'none';
+  const latestKey = activeKeyId() ?? 'none';
 
   return `
   <header class="cl-hero">
@@ -473,12 +488,14 @@ async function onCreateKey() {
  * live key bytes exactly as the production path does.
  */
 async function onSeal() {
-  if (!state.keyId) throw new Error('Create a key first');
+  const keyId = activeKeyId();
+  if (!keyId) throw new Error('Create a key first');
+  state.keyId = keyId;
   const plaintext = state.plaintext.length ? state.plaintext : 'Hello envelope world';
   const context = state.context;
   const aadBytes = encoder.encode(context);
   const { plaintextDEK, wrappedDEK, kekId, kekVersion } = await kmsApi.GenerateDataKey(
-    state.keyId,
+    keyId,
     32,
     'seal',
   );
@@ -570,15 +587,20 @@ async function onOpen() {
 }
 
 async function onRotate() {
-  if (!state.keyId) return;
-  const rotated = await kmsApi.RotateKey(state.keyId, 'ui');
+  const keyId = activeKeyId();
+  if (!keyId) throw new Error('Create a KEK first');
+  state.keyId = keyId;
+  const rotated = await kmsApi.RotateKey(keyId, 'ui');
   state.timeline.push(`RotateKey -> ${rotated.keyId}@v${rotated.version}`);
 }
 
 async function onRewrap() {
   const latest = state.envelopes[state.envelopes.length - 1];
-  if (!latest || !state.keyId) return;
-  const rewrapped = await rewrapEnvelope(latest, state.keyId);
+  const keyId = activeKeyId();
+  if (!latest) throw new Error('Seal an envelope first');
+  if (!keyId) throw new Error('Create a KEK first');
+  state.keyId = keyId;
+  const rewrapped = await rewrapEnvelope(latest, keyId);
   state.envelopes[state.envelopes.length - 1] = rewrapped;
   state.timeline.push(`Rewrap -> ${rewrapped.kekId}@v${rewrapped.kekVersion}`);
 }
@@ -614,18 +636,16 @@ async function runPreset(name: string) {
     return;
   }
   if (name === 'breach') {
-    if (!state.keyId) {
-      const created = await kmsApi.CreateKey('AES256', 'breach-response');
-      state.keyId = created.keyId;
-    }
+    const keyId = activeKeyId() ?? (await kmsApi.CreateKey('AES256', 'breach-response')).keyId;
+    state.keyId = keyId;
     // Rotate first to create a new active version, then re-wrap envelopes to it,
     // then schedule deletion so the old version enters its grace window.
-    const rotated = await kmsApi.RotateKey(state.keyId, 'breach-response');
+    const rotated = await kmsApi.RotateKey(keyId, 'breach-response');
     if (state.envelopes.length) {
       const latest = state.envelopes[state.envelopes.length - 1];
-      state.envelopes[state.envelopes.length - 1] = await rewrapEnvelope(latest, state.keyId);
+      state.envelopes[state.envelopes.length - 1] = await rewrapEnvelope(latest, keyId);
     }
-    await kmsApi.ScheduleKeyDeletion(state.keyId, 7, 'breach-response');
+    await kmsApi.ScheduleKeyDeletion(keyId, 7, 'breach-response');
     state.timeline.push(
       `Preset Breach Response -> rotate to v${rotated.version}, re-wrap, schedule deletion (7 days)`,
     );

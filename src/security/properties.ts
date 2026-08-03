@@ -56,8 +56,19 @@ function randomBytes(length: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(length));
 }
 
+/**
+ * The rejection reason a card renders after "Rejected: ".
+ *
+ * WebCrypto rejects a failed AES-GCM tag check with an `OperationError` whose
+ * `message` is empty in Chromium, so the AAD-binding and ciphertext-tamper cards
+ * rendered a dangling "Rejected:" that never said why the property held. Fall
+ * back to the exception's name — the same way the envelope panel's cross-tenant
+ * result already does.
+ */
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  if (!(error instanceof Error)) return String(error);
+  if (error.message) return error.message;
+  return error.name ? `${error.name} — authentication failed` : 'authentication failed';
 }
 
 /** Raw AES-256-CTR — confidentiality with no authentication whatsoever. */
