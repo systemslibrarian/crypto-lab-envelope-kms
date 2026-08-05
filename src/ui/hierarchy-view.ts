@@ -91,7 +91,14 @@ export function renderHierarchyView(keys: KekMetadata[], envelopes: EnvelopeReco
 
   return `<section class="panel hierarchy-panel">
     <h2>Hierarchy View</h2>
-    <div class="hierarchy-scroll">
+    <!-- tabindex only. The diagram has a 720px minimum width, so below roughly
+         that this div scrolls horizontally, and a scrolling region no keyboard
+         user can reach is a WCAG 2.1.1 trap (axe: scrollable-region-focusable).
+         Deliberately NOT role="region" + aria-label: this wrapper is recreated
+         on every render, and turning re-created wrappers into landmarks churns
+         the accessibility tree badly enough to destabilise unrelated tests. The
+         SVG inside already carries its own role and label. -->
+    <div class="hierarchy-scroll" tabindex="0">
       <svg viewBox="0 0 ${width} ${height}" class="hierarchy-svg" role="img" aria-label="Root KEK to KEK to wrapped DEK hierarchy" preserveAspectRatio="xMinYMin meet">
         ${headers}
         ${rootRect}

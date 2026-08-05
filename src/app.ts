@@ -65,7 +65,13 @@ const GLOSS: Record<string, string> = {
 function gloss(term: string, label = term): string {
   const def = GLOSS[term];
   if (!def) return escapeText(label);
-  return `<abbr class="gloss" tabindex="0" title="${escapeAttr(def)}" aria-label="${escapeAttr(def)}">${escapeText(label)}</abbr>`;
+  // `title` only, no `aria-label`. <abbr> has no implicit ARIA role, and ARIA
+  // prohibits naming a role-less element, so the aria-label that used to be
+  // here was discarded by the accessibility tree — the definition reached
+  // sighted hover users and nobody else. `title` on an <abbr> is the mapping
+  // that actually carries the expansion to assistive technology. axe reports
+  // the prohibited attribute as `incomplete`, which the old gate never read.
+  return `<abbr class="gloss" tabindex="0" title="${escapeAttr(def)}">${escapeText(label)}</abbr>`;
 }
 
 /** A real, in-browser snapshot of one seal, captured for the wrap visualizer. */
@@ -149,7 +155,12 @@ function comparisonPanel(): string {
   return `<section class="panel">
     <h2>KMS Comparison</h2>
     <div class="table-scroll-hint" aria-hidden="true">← scroll →</div>
-    <table class="comparison-table" aria-label="KMS provider feature comparison">
+    <!-- tabindex only, for the same reason as .hierarchy-scroll: under 900px
+         this table becomes its own horizontally scrolling box, and without it
+         a keyboard user cannot scroll to the columns the hint points at. The
+         accessible name comes from the caption and the element's own table
+         role, so no extra ARIA is needed or wanted here. -->
+    <table class="comparison-table" tabindex="0" aria-label="KMS provider feature comparison">
       <caption class="sr-only">Side-by-side comparison of AWS KMS, Google Cloud KMS, Azure Key Vault, and HashiCorp Vault transit engine.</caption>
       <thead>
         <tr>
@@ -283,6 +294,13 @@ function wrapVisualizer(): string {
   const dekShort = `${w.dekHex.slice(0, 32)}…`;
   const ctShort = `${w.ciphertextHex.slice(0, 32)}${w.ciphertextHex.length > 32 ? '…' : ''}`;
   const wrapShort = `${w.wrappedHex.slice(0, 32)}…`;
+  // Each hex value is named by a visually-hidden span rather than by
+  // aria-label. <code> has no implicit ARIA role, and ARIA prohibits naming a
+  // role-less element, so the aria-labels that used to sit on these tags were
+  // discarded outright: a screen reader read 32 characters of hex with no
+  // indication of what it was. axe files that under `incomplete` rather than
+  // `violations`, and this panel only exists after a seal, so the old gate
+  // missed it twice over — wrong result bucket and wrong state.
   const step = (n: number, title: string, body: string): string =>
     `<li class="wrap-step" data-step="${n}">
       <span class="wrap-step-caption">Step ${n}/4</span>
@@ -298,25 +316,25 @@ function wrapVisualizer(): string {
       ${step(
         1,
         `Draw a random 32-byte ${gloss('DEK')}`,
-        `<code class="wrap-hex dek" aria-label="plaintext DEK, 32 bytes">${dekShort}</code>
+        `<span class="sr-only">plaintext DEK, 32 bytes: </span><code class="wrap-hex dek">${dekShort}</code>
          <span class="wrap-note">crypto.getRandomValues(32) — fresh, per object</span>`,
       )}
       ${step(
         2,
         `Encrypt your data under the DEK (AES-256-GCM)`,
-        `<code class="wrap-hex ct" aria-label="ciphertext">${ctShort}</code>
+        `<span class="sr-only">ciphertext: </span><code class="wrap-hex ct">${ctShort}</code>
          <span class="wrap-note">plaintext "${escapeText(w.plaintext)}" + ${gloss('AAD')} "${escapeText(w.aad)}" → ciphertext + ${gloss('tag')}</span>`,
       )}
       ${step(
         3,
         `Wrap the SAME DEK under the ${gloss('KEK')} (RFC 3394)`,
-        `<code class="wrap-hex wrapped" aria-label="wrapped DEK">${wrapShort}</code>
+        `<span class="sr-only">wrapped DEK: </span><code class="wrap-hex wrapped">${wrapShort}</code>
          <span class="wrap-note">${escapeText(w.kekId)}@v${w.kekVersion} wraps the DEK → ${gloss('wrappedDEK')} (40B, 8B longer)</span>`,
       )}
       ${step(
         4,
         `Zeroize the plaintext DEK`,
-        `<code class="wrap-hex dek zeroized" aria-label="plaintext DEK destroyed">${dekShort}</code>
+        `<span class="sr-only">plaintext DEK destroyed: </span><code class="wrap-hex dek zeroized">${dekShort}</code>
          <span class="wrap-note">the live DEK bytes were overwritten with zeros — only the wrapped copy survives</span>`,
       )}
     </ol>

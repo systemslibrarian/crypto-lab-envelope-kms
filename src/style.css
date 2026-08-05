@@ -20,7 +20,11 @@
   --border-strong: rgba(99, 128, 146, 0.34);
   --control-border: #5f7483;
   --text: #c8d9e5;
-  --text-dim: #7e98aa;
+  /* Lifted from #7e98aa: the hero sits inside the body's teal radial glow, and
+     against that lighter surface the old value measured 4.42:1 — below AA. axe
+     never caught it because it refuses to compute a ratio over a gradient and
+     files the result as `incomplete`. Now 5.06:1 there, higher everywhere else. */
+  --text-dim: #8aa3b5;
   --text-hi: #f2f8fb;
   --teal: #35d6bb;
   --teal-soft: rgba(53, 214, 187, 0.12);
@@ -43,8 +47,11 @@ html[data-theme='light'] {
   --border-strong: rgba(60, 80, 100, 0.28);
   --control-border: #72808e;
   --text: #3a4a58;
-  /* Dim/accent hues darkened for WCAG AA (>=4.5:1) on the near-white panels. */
-  --text-dim: #5f7382;
+  /* Dim/accent hues darkened for WCAG AA (>=4.5:1) on the near-white panels.
+     #5f7382 cleared plain white at 4.97:1 but not the tinted hero card
+     (4.18:1) or the struck-through DEK's grey inset (4.40:1); #57697a is
+     4.81:1 on the worst of those. */
+  --text-dim: #57697a;
   --text-hi: #1a2530;
   --teal: #0f7a68;
   --teal-soft: rgba(26, 171, 148, 0.1);
@@ -314,8 +321,10 @@ html[data-theme='light'] .cl-header {
   margin: 0.4rem 0 0;
   font-size: clamp(0.9rem, 1.6vw, 1.05rem);
   letter-spacing: 0.01em;
+  /* No opacity here. --text-dim is already the dimmed role; dimming it a second
+     time took this line to 3.23:1 in light theme. The old a11y gate injected
+     `opacity: 1 !important` before scanning, so it could not have seen that. */
   color: var(--text-dim);
-  opacity: 0.85;
 }
 .cl-hero-desc {
   margin: 0.55rem 0 0;
