@@ -375,7 +375,13 @@ export async function expectNoHorizontalOverflow(page: Page, label: string): Pro
     // `.scroller`.
     const clipped = (el: Element): boolean => {
       let n = el.parentElement;
-      while (n && n !== doc) {
+      // Stop BEFORE <body>. When `body { overflow-x: hidden }` propagates to the
+      // viewport, body itself answers "hidden" to this walk — so every element
+      // on the page reads as clipped, `escaping` is always empty, and the oracle
+      // reports nothing at all. That is the failure this whole check exists to
+      // avoid: a viewport-level clip is the DEFECT, not a legitimate scroller.
+      // Only a genuine scrolling container INSIDE the page excuses an overflow.
+      while (n && n !== doc && n !== document.body) {
         const ox = getComputedStyle(n).overflowX;
         if (ox === 'auto' || ox === 'scroll' || ox === 'hidden' || ox === 'clip') return true;
         n = n.parentElement;
