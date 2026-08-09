@@ -442,7 +442,15 @@ html[data-theme='light'] .cl-header {
 
 .chip {
   padding: 8px 14px;
-  border: 1px solid var(--border-strong);
+  /* --control-border, not --border-strong. A chip's fill sits within 1.1:1 of
+     the panel behind it, so this border IS the control, and --border-strong is
+     the SURFACE divider token (panel edges, `pre`, table rules): it measured
+     1.58:1 here in both themes, on every chip on the page — the seven operations
+     buttons, the four request-flow tabs, the ten property runners, the audit
+     tamper button and every inspector copy button. --control-border is the token
+     this palette already defines for a control edge; it was applied only to
+     `.seal-input`, which is why nothing had ever caught this. */
+  border: 1px solid var(--control-border);
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -1360,7 +1368,10 @@ html[data-theme='light'] .key-status {
   gap: 10px;
   padding: 18px 18px 16px;
   text-align: left;
-  border: 1px solid var(--border);
+  /* Same reasoning as .chip, and worse to begin with: these are BUTTONS, their
+     fill is within 1.05:1 of the page behind them, and --border is the weakest
+     divider token in the palette. It measured 1.28:1. */
+  border: 1px solid var(--control-border);
   background-color: rgba(7, 16, 22, 0.55);
   color: var(--text);
   cursor: pointer;
