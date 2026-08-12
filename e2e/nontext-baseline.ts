@@ -17,6 +17,38 @@ export const NONTEXT_BASELINE: Record<
   string,
   { ratio: number; required: number; unverified: boolean }
 > = {
-  // Empty, and that is the goal state: no known 1.4.11 or generated-content
-  // findings. Any that appear will fail the gate outright.
+  // RECAPTURED. This file was previously EMPTY, and that emptiness was not a
+  // clean bill of health — it was the footprint of a dead oracle.
+  // `expectNoNewNonTextFailures` was reachable only from inside
+  // `expectScrollersReachableSoft`, AFTER that function's
+  // `if (!COLLECTING) return …` guard, so `nontext.ts` never ran in a strict
+  // pass and the baseline was captured by a check that never looked. It is now
+  // called from `scan()` directly, at every driven state.
+  //
+  // What the live oracle actually finds, over {dark, light} × {1280, 380} and
+  // every state the drive builds, is exactly these two — both in the SHARED
+  // Crypto Lab top bar, and neither one this repo's to fix.
+  //
+  // `.cl-btn` draws its edge as
+  // `1px solid color-mix(in srgb, var(--accent, #35d6bb) 38%, transparent)`
+  // over the bar's fixed `#0b1512`. This lab does define `--accent`, but on
+  // `.cl-hero` rather than `:root`, so it never reaches the bar: the FALLBACK
+  // teal applies and the composited edge resolves to rgb(27,94,82), 2.45:1
+  // against the bar (needs 3:1), identically in both themes — the bar is always
+  // dark, so the theme does not move it.
+  //
+  // Every repo in this fleet carries a byte-identical copy of that markup and
+  // CSS, and `CLAUDE.md` is explicit that a change every lab should get is a
+  // reviewed fleet-wide pass and never an overwrite driven from one repo. So it
+  // is measured here, ratcheted here, and reported upward.
+  //
+  // Everything inside `<main>`, the hero and the footer is audited with no
+  // exemption, and comes back clean — `.chip` having already been moved from
+  // the `--border-strong` surface divider onto `--control-border`.
+  'control-boundary|a.cl-btn': { ratio: 2.45, required: 3, unverified: false },
+  'control-boundary|button#cl-theme-toggle.cl-btn.cl-icon': {
+    ratio: 2.45,
+    required: 3,
+    unverified: false,
+  },
 };
