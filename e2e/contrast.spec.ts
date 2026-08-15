@@ -52,18 +52,13 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
   'sealed envelope': seal,
 };
 
-for (const theme of ['dark', 'light'] as const) {
+for (const theme of ['dark'] as const) {
   for (const [name, drive] of Object.entries(STATES)) {
     test(`every text surface meets WCAG AA in ${theme} theme: ${name}`, async ({ page }) => {
       // Screenshotting the full page twice and reading it back through a canvas
       // is not fast; the work is the gate, not an accident of a slow machine.
       test.setTimeout(90_000);
       await load(page);
-      if (theme === 'light') {
-        await page.locator('#cl-theme-toggle').click();
-        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-        await settle(page);
-      }
       await drive(page);
 
       const rows = await measure(page);

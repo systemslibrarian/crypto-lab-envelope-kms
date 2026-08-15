@@ -46,9 +46,4 @@ export const NONTEXT_BASELINE: Record<
   // exemption, and comes back clean — `.chip` having already been moved from
   // the `--border-strong` surface divider onto `--control-border`.
   'control-boundary|a.cl-btn': { ratio: 2.45, required: 3, unverified: false },
-  'control-boundary|button#cl-theme-toggle.cl-btn.cl-icon': {
-    ratio: 2.45,
-    required: 3,
-    unverified: false,
-  },
 };

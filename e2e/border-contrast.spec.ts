@@ -16,10 +16,9 @@ function contrast(first: Rgb, second: Rgb): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-for (const theme of ['dark', 'light'] as const) {
+for (const theme of ['dark'] as const) {
   test(`${theme} seal inputs retain 3:1 boundary contrast`, async ({ page }) => {
     await page.goto('.');
-    if (theme === 'light') await page.locator('#cl-theme-toggle').click();
 
     const controls = page.locator('.seal-input');
     await expect(controls.first()).toBeVisible();

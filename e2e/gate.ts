@@ -266,8 +266,8 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   // produces it.
   expect(
     await page.evaluate(() => document.documentElement.getAttribute('data-theme')),
-    'the anti-flash script writes data-theme only for light; dark is its absence',
-  ).toBe(theme === 'light' ? 'light' : null);
+    'the anti-flash script pins data-theme to dark, the only theme',
+  ).toBe('dark');
   expect(
     await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
     `the ${theme} palette must actually be the one in effect`,
