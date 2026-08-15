@@ -28,21 +28,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # The vitest suite: envelope wrap/unwrap, the key-wrap primitive, the
-      # KMS API, the audit log, byte helpers and the security properties —
-      # 63 tests across 9 files. Deploy previously ran only test:a11y, so
-      # none of it gated a publish: a build whose envelope decryption was
-      # broken could ship as long as the page passed axe.
+      # typecheck && lint && test && build, which is the same script CI runs.
+      # Deploy previously ran only test:a11y, so none of the vitest suite —
+      # envelope wrap/unwrap, the key-wrap primitive, the KMS API, the audit
+      # log, byte helpers and the security properties, 63 tests across 9
+      # files — gated a publish: a build whose envelope decryption was broken
+      # could ship as long as the page passed axe.
       #
-      # Deliberately npm test and not npm run ci — the ci script chains lint,
-      # which is red on main (two no-unused-vars errors in e2e/gate.ts, from
-      # ca23ff2). Wiring that in would block every future publish. The lint
-      # failure is a separate repair.
-      - name: Unit tests
-        run: npm test
-
-      - name: Build
-        run: npm run build
+      # This step ran as `npm test` alone for one commit, because `ci` chains
+      # lint and lint was red on main (two no-unused-vars errors in
+      # e2e/gate.ts, from ca23ff2). Those are repaired, so the deploy now
+      # gates on the whole script rather than on the subset of it that was
+      # green. `ci` ends in `npm run build`, so no separate build step.
+      - name: CI gate (typecheck, lint, unit tests, build)
+        run: npm run ci
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium

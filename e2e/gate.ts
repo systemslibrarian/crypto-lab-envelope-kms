@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { auditContrast, formatContrastFailures } from './contrast';
-import { auditNonText, formatNonTextFailures, type NonTextFailure } from './nontext';
+import { auditNonText, formatNonTextFailures } from './nontext';
 import { NONTEXT_BASELINE } from './nontext-baseline';
 
 export const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
@@ -746,7 +746,11 @@ export async function expectNoNewNonTextFailures(page: Page, label: string): Pro
     nonTextSeen.add(key);
     const base = NONTEXT_BASELINE[key];
     if (!base) {
-      problems.push(`NEW ${f.ratio}:1 (needs ${f.required}:1) [${f.kind}] ${f.selector} — ${f.detail}`);
+      // Rendered by `nontext.ts`'s own formatter rather than re-templated here:
+      // the string this branch used to build inline was a character-for-character
+      // copy of `formatNonTextFailures`, so the two could drift and a baseline
+      // captured through one would stop matching a failure reported by the other.
+      problems.push(`NEW ${formatNonTextFailures([f])[0]}`);
     } else if (f.ratio < base.ratio - 0.01) {
       problems.push(
         `WORSE ${f.selector}: ${f.ratio}:1, baseline recorded ${base.ratio}:1`
