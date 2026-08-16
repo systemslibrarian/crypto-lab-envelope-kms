@@ -291,12 +291,6 @@ if (process.argv[1]?.endsWith('measure.mjs')) {
   const page = await browser.newPage({ viewport: { width, height }, colorScheme: 'dark' });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(url, { waitUntil: 'load' });
-  if (theme === 'light') {
-    await page.locator('#cl-theme-toggle').click();
-    await page.waitForFunction(
-      () => document.documentElement.getAttribute('data-theme') === 'light',
-    );
-  }
   await page.evaluate(() => {
     for (const d of document.querySelectorAll('details')) d.open = true;
   });
