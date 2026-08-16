@@ -45,9 +45,6 @@
       (function () {
         try {
           localStorage.setItem('theme', 'dark');
-          localStorage.setItem('cv-theme', 'dark');
-          localStorage.setItem('cl-theme', 'dark');
-          localStorage.setItem('crypto-lab-theme', 'dark');
         } catch (e) {}
         document.documentElement.setAttribute('data-theme', 'dark');
       })();
@@ -173,8 +170,7 @@
       }
       /* Dark is the only theme, so hide any in-page theme toggle a lab still
      ships. The element stays in the DOM so the lab's theme JS keeps working. */
-      body
-        :is(#theme-toggle, #themeToggle, .theme-toggle, .theme-toggle-btn, [data-theme-toggle]) {
+      body :is(#theme-toggle, #themeToggle, .theme-toggle, .theme-toggle-btn, [data-theme-toggle]) {
         display: none !important;
       }
       @media (max-width: 560px) {
@@ -307,10 +303,33 @@
     <footer class="footer wrap">
       <div class="footer-related">
         Related demos:
-        <a href="https://systemslibrarian.github.io/crypto-lab-aes-modes/" target="_blank" rel="noopener">crypto-lab-aes-modes</a>
-        · <a href="https://systemslibrarian.github.io/crypto-lab-format-ward/" target="_blank" rel="noopener">crypto-lab-format-ward</a>
-        · <a href="https://systemslibrarian.github.io/crypto-lab-kdf-chain/" target="_blank" rel="noopener">crypto-lab-kdf-chain</a>
-        · <a href="https://systemslibrarian.github.io/crypto-lab-pq-rotation/" target="_blank" rel="noopener">crypto-lab-pq-rotation</a>
+        <a
+          href="https://systemslibrarian.github.io/crypto-lab-aes-modes/"
+          target="_blank"
+          rel="noopener"
+          >crypto-lab-aes-modes</a
+        >
+        ·
+        <a
+          href="https://systemslibrarian.github.io/crypto-lab-format-ward/"
+          target="_blank"
+          rel="noopener"
+          >crypto-lab-format-ward</a
+        >
+        ·
+        <a
+          href="https://systemslibrarian.github.io/crypto-lab-kdf-chain/"
+          target="_blank"
+          rel="noopener"
+          >crypto-lab-kdf-chain</a
+        >
+        ·
+        <a
+          href="https://systemslibrarian.github.io/crypto-lab-pq-rotation/"
+          target="_blank"
+          rel="noopener"
+          >crypto-lab-pq-rotation</a
+        >
       </div>
       <div class="footer-quote">
         <blockquote>
