@@ -47,6 +47,16 @@ describe('bytes', () => {
     }
   });
 
+  it('u64beToBigInt rejects any input that is not exactly 8 bytes', () => {
+    // AES-KW's A register and its step counter are 64-bit by definition. A
+    // silent accept of a short or long buffer would return a quietly wrong
+    // integer and the wrap would still "succeed" — emitting a blob no
+    // conforming implementation can unwrap. Fail loudly instead.
+    expect(() => u64beToBigInt(new Uint8Array(7))).toThrow(/8 bytes/);
+    expect(() => u64beToBigInt(new Uint8Array(9))).toThrow(/8 bytes/);
+    expect(() => u64beToBigInt(new Uint8Array(0))).toThrow(/8 bytes/);
+  });
+
   it('zeroize wipes buffer in place', () => {
     const buf = new Uint8Array([1, 2, 3, 4]);
     zeroize(buf);
