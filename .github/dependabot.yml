@@ -1,3 +1,19 @@
+# TypeScript 7 is ignored here, deliberately, since 2026-08-21.
+#
+# Not a code problem: `tsc --noEmit` passes clean under TS 7 in this repo. The
+# blocker is typescript-eslint, which throws at module load on any TS >= 7
+# (`if (versionMajor >= 7) throw`), and eslint.config.js imports it, so the lint
+# config cannot be loaded at all. That check reads the resolved TypeScript
+# version, so an npm `overrides` entry does not get around it.
+#
+# 8.67.0 is the latest release and the canary carries the same
+# `typescript >=4.8.4 <6.1.0` peer range -- there is no version to move to.
+# Tracking: https://github.com/typescript-eslint/typescript-eslint/issues/10940
+#
+# The ignore lives in Dependabot's own state (set via `@dependabot ignore this
+# major version` on the PR), not in this file -- this note is here because this
+# is where someone will look. When typescript-eslint ships TS 7 support, drop
+# the ignore and the bump should be a one-line merge.
 # Grouped so an ecosystem's routine bumps arrive as ONE pull request instead of
 # one per dependency. Ungrouped, this fleet opened 1,461 PRs across 176 repos.
 #
