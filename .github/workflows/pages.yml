@@ -1,8 +1,32 @@
 name: Deploy to GitHub Pages
 
+# One workflow, one gate. This lab used to split them: ci.yml ran format:check,
+# typecheck, lint, test:coverage, build and npm audit on pull_request, and this
+# file ran the heavier gate -- `npm run ci` plus the axe WCAG A/AA browser scan
+# -- on push to main. Dependabot's auto-merge hung off ci.yml, the lighter of
+# the two, and ci.yml has no browser in it at all.
+#
+# So a bump only had to satisfy the non-browser half to merge itself. The axe
+# gate then failed on the merge commit, the deploy was blocked, and the live
+# site kept serving the old build. Nothing goes red in between: the PR is green,
+# the merge is clean, and staleness is not a state anything reports.
+# crypto-lab-e91 drifted exactly that way and was found serving a twenty-day-old
+# build.
+#
+# The gate a bump merges against is now literally the gate the deploy runs: one
+# `build` job, depended on by both `deploy` and `dependabot-auto-merge`. ci.yml
+# is deleted rather than kept beside it -- a second copy of a gate is how the two
+# drifted apart in the first place -- and its four steps that were not already
+# covered here (format:check, test:coverage, the coverage artifact, npm audit)
+# moved across verbatim, flags included, before it was removed.
 on:
   push:
     branches: [main]
+  # The gate has to judge pull requests too, or auto-merge has nothing to wait
+  # on. Filter copied from ci.yml, which was `branches: [main]`.
+  pull_request:
+    branches: [main]
+  # Required by the post-merge dispatch at the bottom of this file.
   workflow_dispatch:
 
 permissions:
@@ -11,7 +35,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # Keyed by ref, NOT a bare `pages`. Now that pull_request is a trigger and
+  # cancel-in-progress is on, a bare group would let a PR run cancel a live main
+  # deploy -- and `cancelled` is one of the shapes that ships nothing while
+  # looking like nothing went wrong.
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,6 +56,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Migrated from ci.yml, verbatim. It was non-blocking there and stays
+      # non-blocking here: carrying the flag across is preservation, and dropping
+      # it would be a scope change that could redden main over formatting drift
+      # this sweep never looked at.
+      - name: Format check
+        run: npm run format:check
+        continue-on-error: true
+
       # typecheck && lint && test && build, which is the same script CI runs.
       # Deploy previously ran only test:a11y, so none of the vitest suite —
       # envelope wrap/unwrap, the key-wrap primitive, the KMS API, the audit
@@ -43,6 +79,29 @@ jobs:
       - name: CI gate (typecheck, lint, unit tests, build)
         run: npm run ci
 
+      # Migrated from ci.yml. This re-runs the vitest suite `npm run ci` just
+      # ran, costing seconds, and that is deliberate: `test:coverage` is
+      # `vitest run --coverage`, a strict superset of `test`, and the artifact
+      # below needs coverage/ to exist. The alternative -- re-deriving `npm run
+      # ci` as four enumerated steps so the two could be merged into one -- is
+      # exactly the hand-translation that loses a check.
+      - name: Test (with coverage)
+        run: npm run test:coverage
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Migrated from ci.yml, verbatim, non-blocking there and here.
+      - name: npm audit (high severity only)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
@@ -55,6 +114,16 @@ jobs:
           path: dist
 
   deploy:
+    # A pull request is gated, never published. `!= 'pull_request'` and NOT
+    # `== 'push'`: the latter reads as equivalent and also skips
+    # workflow_dispatch, which is the one trigger the post-merge dispatch below
+    # depends on -- the dispatched run would build, pass the gate, skip this job,
+    # and leave the site exactly as stale as it was.
+    #
+    # Safe to gate only because build and deploy are separate jobs. Where they
+    # are one job, gating it off for pull requests disables the PR gate itself,
+    # so the PR runs nothing and reports nothing.
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
@@ -64,3 +133,63 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+  # Dependabot only. `needs: build` is the whole safety argument, and it is the
+  # SAME build job `deploy` needs -- not a copy of it -- so a bump cannot merge
+  # unless the thing that would later block the deploy has already gone green on
+  # the PR. This job lived in ci.yml, whose gate had no browser in it; that is
+  # the hole being closed.
+  dependabot-auto-merge:
+    needs: build
+    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write # required by the deploy dispatch; without it gh workflow run 403s
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v3
+      # Majors included on purpose. `needs:` above already required the whole
+      # gate to pass, and that gate -- unit tests, build, axe WCAG and the e2e
+      # claims -- judges a bump far better than its version number does. A major
+      # that actually breaks this lab fails the gate and stays open for a human.
+      - name: Merge any bump whose gate went green
+        # Retry: a sibling PR merging first moves main underneath us and GitHub
+        # rejects with "Base branch was modified". That is benign, so try again
+        # rather than failing the run over a race.
+        run: |
+          for attempt in 1 2 3; do
+            if gh pr merge --squash --delete-branch "$PR_URL"; then
+              exit 0
+            fi
+            echo "merge attempt $attempt failed; base branch may have moved - retrying"
+            sleep 15
+          done
+          echo "::warning::gate passed but the merge did not land after 3 attempts;"
+          echo "::warning::leaving this PR open - Dependabot will rebase and retry."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # A merge made with GITHUB_TOKEN raises no push event -- GitHub suppresses
+      # them so workflows cannot retrigger themselves -- so deploy would never run
+      # and the site would keep serving the previous build. Ask for it explicitly;
+      # a workflow_dispatch through the API is not suppressed. The dispatched run
+      # is the same gate-then-deploy pipeline, so a bad merge still ships nothing.
+      #
+      # The filename below has to be the one THIS repo has. It is pages.yml here,
+      # not deploy.yml as in most of the fleet; a wrong name 404s only on the
+      # auto-merge path, only after the merge has already landed -- the same
+      # silent non-deploy this step exists to stop. Re-verified after moving this
+      # job out of ci.yml.
+      - name: Deploy the merged result
+        if: success()
+        run: |
+          if gh pr view "$PR_URL" --json state --jq .state | grep -q MERGED; then
+            gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main \
+              || echo "::warning::deploy dispatch failed; run pages.yml by hand"
+          fi
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
