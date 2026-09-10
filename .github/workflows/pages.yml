@@ -193,3 +193,5 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# no-op: verifying the pull_request gate runs and the deploy job is skipped
