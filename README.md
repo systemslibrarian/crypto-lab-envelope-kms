@@ -17,7 +17,7 @@ Envelope encryption is the operational layer of modern cryptographic architectur
 - A **SHA-256 hash-chained audit log** with a tamper-detection demo that highlights the exact digest byte that changed and draws the broken link between an entry's hash and the next entry's `prev_hash`.
 - A **"Try to Break It" security lab** — one-click experiments that run the _real_ primitives and attempt to defeat each guarantee (wrong AAD, tampered ciphertext, cross-tenant unwrap, corrupted key wrap, rotation), so the properties are demonstrated rather than asserted. It sits behind a **"Ready to go deeper?"** disclosure so the page opens with intuition and layers the attacks on top.
 
-The security model assumes KEKs never leave a trust boundary and that the audit log is append-only.
+The normal security model assumes KEKs stay inside a trust boundary and the audit log is append-only. The separate compromise exhibit deliberately violates the KEK assumption. See [the compromise architecture](docs/compromise.md).
 
 ## When to Use It
 
@@ -35,7 +35,7 @@ Users can read the primer, generate KEKs, type their own plaintext and context, 
 
 ## What Can Go Wrong
 
-- **KEK compromise is total.** Because every DEK is wrapped under a KEK, leakage of a KEK (or the root KEK) exposes all data encrypted under it; the whole model rests on KEKs never leaving the trust boundary.
+- **A stolen KEK exposes data whose DEKs it can unwrap.** The compromise experiment actually opens four envelopes with one stolen version: a shared KEK exposes both tenants, while independent KEKs contain the exposure to one tenant. Rotation alone leaves old wraps exposed. Re-wrap protects the replacement wrap but cannot revoke retained DEKs or archived copies. Fresh-DEK re-encryption protects replacement ciphertext, not previously exposed plaintext.
 - **Rotation without re-wrap.** Rotating a KEK does not re-encrypt existing envelopes; the old KEK version must be retained in `decrypt-only` state, and deleting it too early permanently loses access to data still wrapped under it.
 - **AAD / context misuse.** AES-GCM and key wrap bind associated data; omitting or mismatching the AAD (tenant/context) can allow a ciphertext to be decrypted in the wrong context or break decryption entirely.
 - **Audit-log integrity assumptions.** Tamper detection relies on the hash chain plus an append-only store; if the log can be silently rewritten or truncated, the integrity guarantee is lost.
@@ -94,3 +94,4 @@ See [SECURITY.md](./SECURITY.md) for what's real vs. simulated, and [CONTRIBUTIN
 _Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite._
 
 _"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31_
+
