@@ -1,3 +1,4 @@
+import { compromisePanel } from './ui/compromise';
 import { aeadOpen, aeadSeal } from './crypto/aead';
 import { decoder, encoder, zeroize } from './crypto/bytes';
 import { runRfcVectors } from './crypto/rfc-vectors';
@@ -476,6 +477,7 @@ function appMarkup(): string {
 
   ${renderRotationPanel(state.timeline)}
   ${renderAuditView(auditEntries, auditState)}
+  <div id="compromise-mount"></div>
   ${comparisonPanel()}`;
 }
 
@@ -773,6 +775,7 @@ function bind(root: HTMLElement): void {
     render(root);
   });
   root.querySelector('#reset-btn')?.addEventListener('click', () => {
+    compromiseView = undefined;
     state.keyId = null;
     state.envelopes = [];
     state.timeline = ['Ready'];
@@ -896,10 +899,14 @@ function focusSelector(el: Element | null): string | null {
   return null;
 }
 
+let compromiseView: HTMLElement | undefined;
+
 export function render(root: HTMLElement): void {
   const selector = focusSelector(document.activeElement);
   root.innerHTML = appMarkup();
   bind(root);
+  compromiseView ??= compromisePanel();
+  root.querySelector('#compromise-mount')?.replaceWith(compromiseView);
   if (selector) {
     const next = root.querySelector<HTMLElement>(selector);
     // Preserve focus across the re-render; the element may be gone (e.g. after

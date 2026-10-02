@@ -730,3 +730,21 @@ test.describe('Envelope KMS — page claims', () => {
     await expect(page.locator('#create-key')).toBeEnabled();
   });
 });
+
+test('stolen KEK copies survive re-wrap; tenant isolation contains exposure', async ({ page }) => {
+  await page.goto('.');
+  const lab = page.locator('#compromise-lab');
+  await lab.locator('#compromise-run').click();
+  const rows = lab.locator('tbody tr');
+  await expect(rows).toHaveCount(4);
+  await expect(rows.nth(2).locator('td')).toHaveText(['2/4', '0/4', '2/4', '0/4', '4/4']);
+  await expect(rows.nth(3).locator('td')).toHaveText(['2/4', '0/4', '0/4', '0/4', '4/4']);
+  await expect(lab).toContainText('cannot erase the attacker’s archived plaintext');
+  await lab.locator('select').selectOption('shared');
+  await expect(rows).toHaveCount(0);
+  await expect(lab).toContainText('Previous results retired');
+  await lab.locator('#compromise-run').click();
+  await expect(rows).toHaveCount(4);
+  await expect(rows.nth(1).locator('td')).toHaveText(['4/4', '4/4', '4/4', '0/4', '4/4']);
+  await expect(rows.nth(2).locator('td')).toHaveText(['4/4', '0/4', '4/4', '0/4', '4/4']);
+});
