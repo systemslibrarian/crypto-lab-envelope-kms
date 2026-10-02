@@ -26,40 +26,78 @@ export async function runCompromise(isolated: boolean): Promise<CompromiseStage[
     const aad = encoder.encode(index < 2 ? 'tenant=A' : 'tenant=B');
     try {
       const payload = await aeadSeal(encoder.encode(`record ${index}`), dek, aad);
-      return { ...payload, aad, wrappedDEK: aesKwWrap(material, dek), kekId: id, kekVersion: version };
-    } finally { zeroize(material); zeroize(dek); }
+      return {
+        ...payload,
+        aad,
+        wrappedDEK: aesKwWrap(material, dek),
+        kekId: id,
+        kekVersion: version,
+      };
+    } finally {
+      zeroize(material);
+      zeroize(dek);
+    }
   };
   const original = await Promise.all(ids.map(seal));
   // Deep copies matter: storage maintenance must never mutate the attacker's archive.
-  const archived = original.map(e => ({ ...e, wrappedDEK: e.wrappedDEK.slice(),
-    ciphertext: e.ciphertext.slice(), iv: e.iv.slice(), tag: e.tag.slice(), aad: e.aad.slice() }));
+  const archived = original.map((e) => ({
+    ...e,
+    wrappedDEK: e.wrappedDEK.slice(),
+    ciphertext: e.ciphertext.slice(),
+    iv: e.iv.slice(),
+    tag: e.tag.slice(),
+    aad: e.aad.slice(),
+  }));
   const stolen = store.getMaterialForUnwrap(a, 1);
-  const retained = original.map(e => {
-    try { return aesKwUnwrap(stolen, e.wrappedDEK); } catch { return null; }
+  const retained = original.map((e) => {
+    try {
+      return aesKwUnwrap(stolen, e.wrappedDEK);
+    } catch {
+      return null;
+    }
   });
   const openWithDek = async (e: EnvelopeRecord, dek: Uint8Array | null): Promise<boolean> => {
     if (!dek) return false;
-    try { const plain = await aeadOpen(e.ciphertext, e.iv, e.tag, dek, e.aad); zeroize(plain); return true; }
-    catch { return false; }
+    try {
+      const plain = await aeadOpen(e.ciphertext, e.iv, e.tag, dek, e.aad);
+      zeroize(plain);
+      return true;
+    } catch {
+      return false;
+    }
   };
   const attack = async (e: EnvelopeRecord): Promise<boolean> => {
     let dek: Uint8Array | null = null;
-    try { dek = aesKwUnwrap(stolen, e.wrappedDEK); return await openWithDek(e, dek); }
-    catch { return false; } finally { if (dek) zeroize(dek); }
+    try {
+      dek = aesKwUnwrap(stolen, e.wrappedDEK);
+      return await openWithDek(e, dek);
+    } catch {
+      return false;
+    } finally {
+      if (dek) zeroize(dek);
+    }
   };
   const rows: CompromiseStage[] = [];
   let current = original;
   const record = async (name: string, future: EnvelopeRecord[] = []) => {
-    rows.push({ name,
+    rows.push({
+      name,
       archived: await Promise.all(archived.map(attack)),
       currentWrap: await Promise.all(current.map(attack)),
       currentRetained: await Promise.all(current.map((e, i) => openWithDek(e, retained[i]))),
       future: await Promise.all(future.map(attack)),
-      owner: await Promise.all(current.map(async e => {
-        const kek = store.getMaterialForUnwrap(e.kekId, e.kekVersion);
-        const dek = aesKwUnwrap(kek, e.wrappedDEK);
-        try { return await openWithDek(e, dek); } finally { zeroize(kek); zeroize(dek); }
-      })),
+      owner: await Promise.all(
+        current.map(async (e) => {
+          const kek = store.getMaterialForUnwrap(e.kekId, e.kekVersion);
+          const dek = aesKwUnwrap(kek, e.wrappedDEK);
+          try {
+            return await openWithDek(e, dek);
+          } finally {
+            zeroize(kek);
+            zeroize(dek);
+          }
+        }),
+      ),
     });
   };
   try {
@@ -67,12 +105,17 @@ export async function runCompromise(isolated: boolean): Promise<CompromiseStage[
     for (const id of new Set(ids)) store.rotateKey(id);
     const future = await Promise.all(ids.map(seal));
     await record('Rotate KEKs only', future);
-    current = current.map(e => {
+    current = current.map((e) => {
       const old = store.getMaterialForUnwrap(e.kekId, e.kekVersion);
       const next = store.getMaterialForWrap(e.kekId);
       const dek = aesKwUnwrap(old, e.wrappedDEK);
-      try { return { ...e, wrappedDEK: aesKwWrap(next.material, dek), kekVersion: next.version }; }
-      finally { zeroize(old); zeroize(next.material); zeroize(dek); }
+      try {
+        return { ...e, wrappedDEK: aesKwWrap(next.material, dek), kekVersion: next.version };
+      } finally {
+        zeroize(old);
+        zeroize(next.material);
+        zeroize(dek);
+      }
     });
     await record('Re-wrap existing DEKs', future);
     current = await Promise.all(ids.map(seal));

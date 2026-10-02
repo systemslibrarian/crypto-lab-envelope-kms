@@ -2050,6 +2050,11 @@ mark.hash-diff {
   background-color: rgba(255, 184, 77, 0.08);
 }
 
-
-#compromise-lab label { display: block; margin-bottom: 0.5rem; }
-#compromise-lab select { max-width: 100%; white-space: normal; }
+#compromise-lab label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+#compromise-lab select {
+  max-width: 100%;
+  white-space: normal;
+}

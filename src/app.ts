@@ -920,4 +920,3 @@ export async function bootstrap(root: HTMLElement): Promise<void> {
   await multiRegionScenario();
   render(root);
 }
-

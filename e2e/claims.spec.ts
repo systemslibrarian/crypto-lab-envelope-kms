@@ -731,7 +731,6 @@ test.describe('Envelope KMS — page claims', () => {
   });
 });
 
-
 test('stolen KEK copies survive re-wrap; tenant isolation contains exposure', async ({ page }) => {
   await page.goto('.');
   const lab = page.locator('#compromise-lab');

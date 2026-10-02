@@ -16,22 +16,29 @@ export function compromisePanel(): HTMLElement {
   const result = panel.querySelector<HTMLElement>('#compromise-result')!;
   let last = select.value;
   select.addEventListener('change', () => {
-    if (select.value !== last) result.textContent = 'Previous results retired. Run the new key layout.';
+    if (select.value !== last)
+      result.textContent = 'Previous results retired. Run the new key layout.';
     last = select.value;
   });
   button.addEventListener('click', async () => {
-    button.disabled = true; select.disabled = true;
+    button.disabled = true;
+    select.disabled = true;
     result.textContent = 'Running actual unwrap and decrypt attempts…';
     try {
       const rows = await runCompromise(select.value === 'isolated');
-      const count = (v: boolean[]) => v.length ? `${v.filter(Boolean).length}/${v.length}` : 'Not created';
+      const count = (v: boolean[]) =>
+        v.length ? `${v.filter(Boolean).length}/${v.length}` : 'Not created';
       result.innerHTML = `<p>Attacker holds ${select.value === 'isolated' ? 'Tenant A' : 'the shared'} KEK v1. Records 1–2 belong to A; 3–4 to B.</p>
-        <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Compromise results"><table class="comparison-table"><caption>Successful opens at each maintenance stage</caption>
+        <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Compromise results"><table class="comparison-table" tabindex="0" aria-label="Compromise decryption counts"><caption>Successful opens at each maintenance stage</caption>
         <thead><tr><th scope="col">Stage</th><th scope="col">Archived copies</th><th scope="col">Current wrap + stolen KEK</th><th scope="col">Current data + retained DEK</th><th scope="col">Future data + stolen KEK</th><th scope="col">Owner opens</th></tr></thead>
-        <tbody>${rows.map(r => `<tr><th scope="row">${r.name}</th><td>${count(r.archived)}</td><td>${count(r.currentWrap)}</td><td>${count(r.currentRetained)}</td><td>${count(r.future)}</td><td>${count(r.owner)}</td></tr>`).join('')}</tbody></table></div>
+        <tbody>${rows.map((r) => `<tr><th scope="row">${r.name}</th><td>${count(r.archived)}</td><td>${count(r.currentWrap)}</td><td>${count(r.currentRetained)}</td><td>${count(r.future)}</td><td>${count(r.owner)}</td></tr>`).join('')}</tbody></table></div>
         <p>Scope: stolen raw key material; no further KMS access. All keys are fresh and in memory. Tenant labels and AAD are not access controls against someone who has the key.</p>`;
-    } catch { result.textContent = 'Experiment failed to run; no security verdict is available.'; }
-    finally { button.disabled = false; select.disabled = false; }
+    } catch {
+      result.textContent = 'Experiment failed to run; no security verdict is available.';
+    } finally {
+      button.disabled = false;
+      select.disabled = false;
+    }
   });
   return panel;
 }
