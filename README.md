@@ -94,3 +94,7 @@ See [SECURITY.md](./SECURITY.md) for what's real vs. simulated, and [CONTRIBUTIN
 _Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite._
 
 _"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31_
+
+## Publishing
+
+`npm run deploy` requests the existing `pages.yml` workflow for the current remote `main`. That workflow runs this lab's verification gates before publishing its Pages artifact. A successful request means the run was queued; check the workflow and public site separately to confirm publication. GitHub CLI authentication and workflow-dispatch access are required. Local `dist` files are not uploaded by this command.

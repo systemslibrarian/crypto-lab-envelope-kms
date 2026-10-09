@@ -97,10 +97,10 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      # Migrated from ci.yml, verbatim, non-blocking there and here.
+      # Publisher removal leaves a clean graph; high-severity findings now
+      # block both integration and deployment.
       - name: npm audit (high severity only)
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
