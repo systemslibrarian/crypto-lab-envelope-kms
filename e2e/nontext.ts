@@ -103,7 +103,7 @@ export async function auditNonText(page: Page, within = 'body *'): Promise<NonTe
       const cached = (el as unknown as { __sc?: Map<string, CSSStyleDeclaration> }).__sc?.get(key);
       if (cached) return cached;
       const cs = getComputedStyle(el, pseudo);
-      const holder = (el as unknown as { __sc?: Map<string, CSSStyleDeclaration> });
+      const holder = el as unknown as { __sc?: Map<string, CSSStyleDeclaration> };
       if (!holder.__sc) holder.__sc = new Map();
       holder.__sc.set(key, cs);
       return cs;
@@ -409,7 +409,10 @@ export async function auditNonText(page: Page, within = 'body *'): Promise<NonTe
     /** The canvas background, which paints beyond the root's own box. */
     const canvasBackground = ((): RGBA => {
       const rootRect = rectOf(document.documentElement);
-      const mid: Point = { x: rootRect.left + rootRect.width / 2, y: rootRect.top + rootRect.height / 2 };
+      const mid: Point = {
+        x: rootRect.left + rootRect.width / 2,
+        y: rootRect.top + rootRect.height / 2,
+      };
       const rootPaint = ownPaint(styleOf(document.documentElement), rootRect, mid);
       if (rootPaint.a > 0) return rootPaint;
       if (!document.body) return TRANSPARENT;
@@ -523,9 +526,12 @@ export async function auditNonText(page: Page, within = 'body *'): Promise<NonTe
       // never painted. `appearance: auto` is exactly the signal that the author
       // has NOT taken the painting over; `appearance: none` says they have, and
       // then every pixel is theirs to answer for.
-      const appearance = cs.appearance || (cs as unknown as { webkitAppearance?: string }).webkitAppearance || 'none';
+      const appearance =
+        cs.appearance ||
+        (cs as unknown as { webkitAppearance?: string }).webkitAppearance ||
+        'none';
       const nativeWidget = ['checkbox', 'radio', 'range', 'color', 'file'].includes(
-        (el as HTMLInputElement).type ?? ''
+        (el as HTMLInputElement).type ?? '',
       );
       if (appearance !== 'none' && nativeWidget) continue;
 
@@ -636,6 +642,6 @@ export async function auditNonText(page: Page, within = 'body *'): Promise<NonTe
 
 export function formatNonTextFailures(failures: NonTextFailure[]): string[] {
   return failures.map(
-    (f) => `${f.ratio}:1 (needs ${f.required}:1) [${f.kind}] ${f.selector} — ${f.detail}`
+    (f) => `${f.ratio}:1 (needs ${f.required}:1) [${f.kind}] ${f.selector} — ${f.detail}`,
   );
 }

@@ -736,7 +736,9 @@ export async function expectNoNewNonTextFailures(page: Page, label: string): Pro
   // capture pass can never be mistaken for a passing gate.
   if (process.env.NT_BASELINE_CAPTURE) {
     for (const f of found) {
-      console.log(`NTCAP|${f.kind}|${f.selector}|${f.ratio}|${f.required}|${/POSITIONED/.test(f.detail)}`);
+      console.log(
+        `NTCAP|${f.kind}|${f.selector}|${f.ratio}|${f.required}|${/POSITIONED/.test(f.detail)}`,
+      );
     }
     return;
   }
@@ -752,9 +754,7 @@ export async function expectNoNewNonTextFailures(page: Page, label: string): Pro
       // captured through one would stop matching a failure reported by the other.
       problems.push(`NEW ${formatNonTextFailures([f])[0]}`);
     } else if (f.ratio < base.ratio - 0.01) {
-      problems.push(
-        `WORSE ${f.selector}: ${f.ratio}:1, baseline recorded ${base.ratio}:1`
-      );
+      problems.push(`WORSE ${f.selector}: ${f.ratio}:1, baseline recorded ${base.ratio}:1`);
     }
   }
   expect(problems, `new or worsened non-text contrast in state: ${label}`).toEqual([]);
@@ -771,7 +771,7 @@ export function expectBaselineNotStale(): void {
   const unseen = Object.keys(NONTEXT_BASELINE).filter((k) => !nonTextSeen.has(k));
   expect(
     unseen,
-    'baselined non-text findings that no longer appear — delete them from nontext-baseline.ts (or restore the drive state that showed them)'
+    'baselined non-text findings that no longer appear — delete them from nontext-baseline.ts (or restore the drive state that showed them)',
   ).toEqual([]);
 }
 
