@@ -16,15 +16,17 @@ All primitives are validated against the RFC test vectors at startup (see `src/c
 
 ## Known limitations vs. a real KMS
 
-| Concern                  | Production KMS                           | This demo                                            |
-| ------------------------ | ---------------------------------------- | ---------------------------------------------------- |
-| Root KEK boundary        | HSM (FIPS 140-3 L3+)                     | Module-scoped, in-process memory                     |
-| KEK material at rest     | Sealed in HSM, never exported            | `Uint8Array` in `KekStore`                           |
-| DEK lifetime             | Zeroized on memory free                  | Zeroized via `bytes.zeroize()` ASAP                  |
-| Audit log durability     | Append-only, signed, off-host            | `localStorage` (tamperable on purpose, for the demo) |
-| Access control           | IAM policies, key grants, condition keys | Module boundary only                                 |
-| Multi-region replication | Cryptographically-bound replicas         | Simulated in one runtime                             |
-| Side-channel resistance  | Constant-time HSM operations             | Best-effort JS (e.g. `equalBytes`)                   |
+| Concern                  | Production KMS                                 | This demo                                                        |
+| ------------------------ | ---------------------------------------------- | ---------------------------------------------------------------- |
+| Root KEK boundary        | HSM (FIPS 140-3 L3+)                           | Module-scoped, in-process memory                                 |
+| KEK material at rest     | Sealed in HSM, never exported                  | `Uint8Array` in `KekStore`                                       |
+| DEK lifetime             | Zeroized on memory free                        | Zeroized via `bytes.zeroize()` ASAP                              |
+| Audit log durability     | Append-only, signed, off-host                  | `localStorage` (tamperable on purpose, for the demo)             |
+| Access control           | Authenticated callers, key policies and grants | Toy grant on `Decrypt`; unverified labels; normal API permissive |
+| Multi-region replication | Cryptographically-bound replicas               | Simulated in one runtime                                         |
+| Side-channel resistance  | Constant-time HSM operations                   | Best-effort JS (e.g. `equalBytes`)                               |
+
+RFC 3394/5649 protect the wrapped key material in this implementation but accept no separate AAD parameter. The context is authenticated by AES-GCM on the payload, and changing it leaves the wrapped DEK unchanged. The browser keeps raw DEK bytes in memory for the demonstration, and `Decrypt` can return them. The teaching grant does not make them non-extractable or protect against direct calls to the normal permissive API. See [RFC 3394 §2.2.3.1](https://www.rfc-editor.org/rfc/rfc3394.html#section-2.2.3.1), [WebCrypto AES-GCM](https://www.w3.org/TR/WebCryptoAPI/#aes-gcm), and [AWS KMS key policies](https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html).
 
 ## Reporting an issue
 

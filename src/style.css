@@ -1938,6 +1938,25 @@ html[data-theme='light'] .seal-input {
 }
 
 /* ── Cross-tenant result (in operations panel) ─────────────────────────── */
+.access-policy-outcome {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 14px;
+  border-left: 3px solid var(--teal);
+  background-color: rgba(53, 214, 187, 0.06);
+}
+.access-policy-outcome p,
+.access-policy-note {
+  margin: 0;
+  line-height: 1.6;
+}
+.access-policy-note {
+  margin-top: 12px;
+  color: var(--text);
+  font-size: 12px;
+}
+
 .cross-tenant-result {
   margin-top: 12px;
   display: grid;

@@ -8,6 +8,7 @@ import { type EnvelopeRecord } from './envelope/seal';
 import { auditLog } from './kms/audit-log';
 import { kmsApi } from './kms/kms-api';
 import { kekStore } from './kms/kek-store';
+import { runAccessPolicyExercise, type AccessPolicyResult } from './scenarios/access-policy';
 import { multiRegionScenario } from './scenarios/multi-region';
 import { rotationDrillScenario } from './scenarios/rotation-drill';
 import { singleTenantScenario } from './scenarios/single-tenant';
@@ -96,6 +97,7 @@ type AppState = {
   context: string;
   wrap: WrapSnapshot | null;
   crossTenant: { attempted: boolean; held: boolean; observed: string } | null;
+  accessPolicy: AccessPolicyResult | null;
   deepOpen: boolean;
 };
 
@@ -109,6 +111,7 @@ const state: AppState = {
   context: 'tenant=acme',
   wrap: null,
   crossTenant: null,
+  accessPolicy: null,
   deepOpen: false,
 };
 
@@ -444,7 +447,7 @@ function appMarkup(): string {
         <input id="context-input" class="seal-input" type="text" value="${escapeAttr(state.context)}" maxlength="64" autocomplete="off" spellcheck="false" placeholder="tenant=acme" />
       </label>
     </div>
-    <p class="seal-hint">The context becomes the ${gloss('AAD')}: authenticated but not encrypted, and cryptographically bound to this envelope. Change it, seal, then use <strong>Open as different tenant</strong> to watch the math refuse.</p>
+    <p class="seal-hint">The context becomes the ${gloss('AAD')}: authenticated but not encrypted by AES-GCM. Its tag binds the context to the payload ciphertext; the RFC 3394 wrapped DEK does not take a separate AAD argument. Change the context, seal, then use <strong>Open as different tenant</strong> to watch the GCM tag refuse.</p>
     <div class="controls-row">
       <button id="create-key" class="chip" type="button">Create KEK</button>
       <button id="seal-btn" class="chip" type="button" ${latestKey === 'none' ? 'disabled' : ''}>Generate + Seal</button>
@@ -461,6 +464,7 @@ function appMarkup(): string {
   ${scenariosPanel()}
   ${renderHierarchyView(keys, state.envelopes)}
   <section class="panel"><h2>Envelope Inspector</h2><p class="panel-lede">The on-the-wire payload for the most recently sealed message. Click any field to copy.</p>${envelopeInspector(state.envelopes)}</section>
+  ${accessPolicyPanel()}
 
   <section class="panel deeper" aria-labelledby="deeper-heading">
     <h2 id="deeper-heading">Ready to go deeper?</h2>
@@ -491,6 +495,25 @@ function crossTenantResult(): string {
     ${badge}
     <p class="cross-tenant-observed">${escapeText(r.observed)}</p>
   </div>`;
+}
+
+function accessPolicyPanel(): string {
+  const result = state.accessPolicy;
+  return `<section class="panel access-policy" aria-labelledby="access-heading">
+    <h2 id="access-heading">Who may use this key?</h2>
+    <p class="panel-lede">An intact wrapped key proves the bytes survived wrapping; it does not decide <em>who</em> may request unwrap. Compare our permissive API, which merely logs a caller label, with a small opt-in grant that checks <strong>caller + key + Decrypt</strong> before unwrapping.</p>
+    <button id="access-policy-run" class="chip" type="button">Try the same wrapped DEK both ways</button>
+    ${
+      result
+        ? `<div class="access-policy-outcome" role="status">
+      <p data-access-step="permissive"><strong>Log only:</strong> ${result.permissiveAllowedMallory ? 'Mallory receives the DEK from the unguarded API, despite having no grant.' : 'Unexpected result: Mallory did not receive the DEK.'}</p>
+      <p data-access-step="denied"><strong>Grant check:</strong> ${result.grantDeniedMallory ? 'Mallory is denied before unwrap; no DEK is returned.' : 'Unexpected result: the grant check did not deny Mallory.'}</p>
+      <p data-access-step="allowed"><strong>Allowed caller:</strong> ${result.grantAllowedAlice ? 'Alice can unwrap the same DEK with an explicit grant.' : 'Unexpected result: Alice could not unwrap.'}</p>
+    </div>`
+        : ''
+    }
+    <p class="access-policy-note">The labels “Alice” and “Mallory” are caller-supplied strings in this browser; there is no login, authenticated IAM principal, HSM, or non-extractable key boundary. The exercise returns no key bytes to this panel. For real key authorization, see <a href="https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html">AWS KMS key policies</a>. <a href="https://www.rfc-editor.org/rfc/rfc3394.html#section-2.2.3.1">RFC 3394 §2.2.3.1</a> describes the default wrap integrity check.</p>
+  </section>`;
 }
 
 async function onCreateKey() {
@@ -783,9 +806,20 @@ function bind(root: HTMLElement): void {
     state.securityResults = {};
     state.wrap = null;
     state.crossTenant = null;
+    state.accessPolicy = null;
     auditLog.clear();
     kekStore.clear();
     announce('Reset — cleared keys, envelopes, and audit log');
+    render(root);
+  });
+
+  root.querySelector('#access-policy-run')?.addEventListener('click', async () => {
+    try {
+      state.accessPolicy = await runAccessPolicyExercise();
+      announce('Compared a log-only call with a caller, key, and operation grant');
+    } catch (err) {
+      handleError(err, 'access-policy');
+    }
     render(root);
   });
 

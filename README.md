@@ -13,6 +13,7 @@ Envelope encryption is the operational layer of modern cryptographic architectur
 - An **interactive seal** — type your own plaintext and context/AAD, then use **Open as a different tenant** to watch the real AES-GCM tag refuse to open your envelope under a mismatched context.
 - **RFC 3394** AES Key Wrap and **RFC 5649** padded Key Wrap, validated against the official test vectors.
 - A **KMS-style API surface** (`CreateKey`, `GenerateDataKey`, `Encrypt`, `Decrypt`, `ReEncrypt`, `RotateKey`, `ScheduleKeyDeletion`).
+- A **who may unwrap?** exercise: with a valid handle and intact wrap, the log-only `Decrypt` call accepts Mallory's caller label; an opt-in caller/key/operation grant rejects that label before unwrap, while Alice's grant succeeds. The labels are unverified browser strings, not authenticated identities.
 - **Versioned KEK rotation** with `active`, `decrypt-only`, and `pending-deletion` states.
 - A **SHA-256 hash-chained audit log** with a tamper-detection demo that highlights the exact digest byte that changed and draws the broken link between an entry's hash and the next entry's `prev_hash`.
 - A **"Try to Break It" security lab** — one-click experiments that run the _real_ primitives and attempt to defeat each guarantee (wrong AAD, tampered ciphertext, cross-tenant unwrap, corrupted key wrap, rotation), so the properties are demonstrated rather than asserted. It sits behind a **"Ready to go deeper?"** disclosure so the page opens with intuition and layers the attacks on top.
@@ -22,7 +23,7 @@ The normal security model assumes KEKs stay inside a trust boundary and the audi
 ## When to Use It
 
 - Encrypting large volumes of data where round-tripping every byte to an HSM is impractical — envelope encryption amortizes the HSM call across the object.
-- Multi-tenant systems needing per-tenant key isolation — the KEK hierarchy enforces it cryptographically.
+- Multi-tenant systems needing per-tenant key isolation — distinct KEKs separate cryptographic key material, but requests still require authenticated callers and key-scoped authorization.
 - Regulated environments (PCI-DSS, HIPAA, FedRAMP) requiring documented key rotation and audit trails.
 - Do **NOT** use this pattern for ephemeral session keys — TLS-style key schedules are the right shape there.
 - Do **NOT** reinvent — real deployments use AWS KMS, Google Cloud KMS, Azure Key Vault, or HashiCorp Vault. This demo shows how they work internally.
@@ -31,15 +32,15 @@ The normal security model assumes KEKs stay inside a trust boundary and the audi
 
 **[systemslibrarian.github.io/crypto-lab-envelope-kms](https://systemslibrarian.github.io/crypto-lab-envelope-kms/)**
 
-Users can read the primer, generate KEKs, type their own plaintext and context, seal and watch the DEK be drawn / used / wrapped / zeroized in the "Watch the wrap" panel, open envelopes (and try to open them as a different tenant and watch the AAD binding refuse), rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, tamper with the audit log to see the hash chain detect it, and — under "Ready to go deeper?" — run the security-properties experiments to watch the crypto reject every attack.
+Users can read the primer, generate KEKs, type their own plaintext and context, seal and watch the DEK be drawn / used / wrapped / zeroized in the "Watch the wrap" panel, open envelopes (and try to open them as a different tenant and watch the AAD binding refuse), compare log-only and granted unwrap requests, rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, tamper with the audit log to see the hash chain detect it, and — under "Ready to go deeper?" — run the security-properties experiments to watch the crypto reject every attack.
 
 ## What Can Go Wrong
 
 - **A stolen KEK exposes data whose DEKs it can unwrap.** The compromise experiment actually opens four envelopes with one stolen version: a shared KEK exposes both tenants, while independent KEKs contain the exposure to one tenant. Rotation alone leaves old wraps exposed. Re-wrap protects the replacement wrap but cannot revoke retained DEKs or archived copies. Fresh-DEK re-encryption protects replacement ciphertext, not previously exposed plaintext.
 - **Rotation without re-wrap.** Rotating a KEK does not re-encrypt existing envelopes; the old KEK version must be retained in `decrypt-only` state, and deleting it too early permanently loses access to data still wrapped under it.
-- **AAD / context misuse.** AES-GCM and key wrap bind associated data; omitting or mismatching the AAD (tenant/context) can allow a ciphertext to be decrypted in the wrong context or break decryption entirely.
+- **AAD / context misuse.** This lab passes the context as AES-GCM `additionalData`; a mismatched value fails the GCM tag check. Its RFC 3394/5649 key-wrap functions protect the wrapped key bytes but have no separate AAD argument. Changing only the context leaves the wrapped DEK intact; an application must consistently supply and check the intended context when opening ciphertext. See [WebCrypto AES-GCM](https://www.w3.org/TR/WebCryptoAPI/#aes-gcm) and [RFC 3394 §2.2.3.1](https://www.rfc-editor.org/rfc/rfc3394.html#section-2.2.3.1).
 - **Audit-log integrity assumptions.** Tamper detection relies on the hash chain plus an append-only store; if the log can be silently rewritten or truncated, the integrity guarantee is lost.
-- **Multi-tenant isolation gaps.** If unwrap requests are not strictly scoped per tenant/key, a cross-tenant unwrap can break the isolation the KEK hierarchy is meant to enforce.
+- **Multi-tenant isolation gaps.** The normal `KmsApi.Decrypt` only logs its caller-supplied `principal` and grants use to anyone with a valid wrapped-key reference. The opt-in `decryptWithGrants` exercise checks a caller/key/`Decrypt` tuple before touching key material, but a real KMS also authenticates that caller and enforces key policies. [AWS KMS key policies](https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html) illustrate the production distinction. Neither path here provides a hardware HSM or non-extractable DEK: `Decrypt` returns raw key bytes, which the exercise zeroizes after comparison.
 
 ## Real-World Usage
 

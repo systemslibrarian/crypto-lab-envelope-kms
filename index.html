@@ -281,7 +281,10 @@
                 <li>The KMS is an in-memory module, not an HSM-backed service.</li>
                 <li>Audit entries persist to localStorage rather than a write-once store.</li>
                 <li>Multi-region is represented in one browser runtime.</li>
-                <li>KEK access control is module-boundary scope, not IAM policy.</li>
+                <li>
+                  The optional caller/key/operation grant is a teaching check. Caller labels are
+                  unverified browser strings, not IAM identities; the normal API remains permissive.
+                </li>
               </ul>
             </div>
             <div>

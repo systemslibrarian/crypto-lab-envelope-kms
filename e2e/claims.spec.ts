@@ -394,6 +394,31 @@ test.describe('Envelope KMS — page claims', () => {
     await expect(page.locator('.cross-tenant-result')).toHaveClass(/held/);
   });
 
+  test('caller labels only log in the base API, while an explicit grant denies before unwrap', async ({
+    page,
+  }) => {
+    await load(page);
+    await resetAll(page);
+    await page.locator('#access-policy-run').click();
+    const result = page.locator('.access-policy-outcome');
+    await expect(result.locator('[data-access-step="permissive"]')).toContainText(
+      'Mallory receives the DEK',
+    );
+    await expect(result.locator('[data-access-step="denied"]')).toContainText(
+      'denied before unwrap; no DEK is returned',
+    );
+    await expect(result.locator('[data-access-step="allowed"]')).toContainText(
+      'Alice can unwrap the same DEK',
+    );
+    await expect(result).not.toContainText(/plaintextDEK|[0-9a-f]{64}/i);
+    const entries = await auditRows(page);
+    expect(
+      entries.filter((entry) => entry.operation === 'Decrypt' && entry.result === 'fail'),
+    ).toHaveLength(1);
+    await expect(page.locator('.audit-status')).toHaveText(/Chain valid/);
+    await expect(page.locator('.access-policy-note a')).toHaveCount(2);
+  });
+
   test('rotation keeps old envelopes readable and re-wrap migrates them', async ({ page }) => {
     test.setTimeout(60_000);
     await load(page);

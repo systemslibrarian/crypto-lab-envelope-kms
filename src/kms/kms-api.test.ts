@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { decoder, encoder } from '../crypto/bytes';
+import { decoder, encoder, zeroize } from '../crypto/bytes';
 import { auditLog } from './audit-log';
 import { kekStore } from './kek-store';
 import { kmsApi } from './kms-api';
@@ -43,6 +43,22 @@ describe('KmsApi', () => {
     expect(enc.tag.length).toBe(16);
     const opened = await kmsApi.DecryptEnvelope({ ...enc }, 'test');
     expect(decoder.decode(opened)).toBe('round trip me');
+  });
+
+  it('changing only AES-GCM AAD leaves the wrap intact but makes opening fail', async () => {
+    const { keyId } = await kmsApi.CreateKey('AES256', 'test');
+    const enc = await kmsApi.Encrypt(
+      { plaintext: encoder.encode('private'), keyId, aad: encoder.encode('tenant=a') },
+      'test',
+    );
+    const wrappedBefore = enc.wrappedDEK.slice();
+    const altered = { ...enc, aad: encoder.encode('tenant=b') };
+    const recoveredDek = await kmsApi.Decrypt(altered, 'test');
+    expect(recoveredDek).toHaveLength(32);
+    zeroize(recoveredDek);
+    await expect(kmsApi.DecryptEnvelope(altered, 'test')).rejects.toThrow();
+    expect(Array.from(enc.wrappedDEK)).toEqual(Array.from(wrappedBefore));
+    expect(decoder.decode(await kmsApi.DecryptEnvelope(enc, 'test'))).toBe('private');
   });
 
   it('Decrypt returns the same DEK that GenerateDataKey produced', async () => {
