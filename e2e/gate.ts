@@ -321,9 +321,11 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   await expect(page.locator('.flow-btn.active')).toHaveAttribute('data-flow', FLOWS[0]);
   await expect(page.locator('.flow-btn.active')).toHaveAttribute('aria-pressed', 'true');
 
-  // The security lab and the wire internals are shut inside one `<details>`,
-  // which the gate this replaces opened from script before every scan.
-  await expect(page.locator('details')).toHaveCount(2);
+  // The security lab and wire internals stay closed on arrival. The new
+  // key-handle model adds one nested disclosure, also closed and hidden.
+  await expect(page.locator('details')).toHaveCount(3);
+  await expect(page.locator('.handle-model-details')).toHaveCount(1);
+  await expect(page.locator('.handle-model-details')).toBeHidden();
   await expect(page.locator('details[open]')).toHaveCount(0);
   // The ten property runners are IN THE DOM — a closed `<details>` keeps its
   // subtree and merely stops painting it — but they are not in the accessibility
@@ -852,7 +854,7 @@ export async function scan(page: Page, label: string): Promise<void> {
 // ── The drive ───────────────────────────────────────────────────────────────
 
 /**
- * Open the one `<details>` on the page by clicking its summary, and assert the
+ * Open the outer security disclosure by clicking its own summary, and assert the
  * content behind it arrived.
  *
  * Never `.open = true`. The gate this replaces had a `revealAll()` helper that
@@ -866,7 +868,7 @@ async function openSecurityLab(page: Page): Promise<void> {
   const d = page.locator('details.deeper-details');
   await expect(d).not.toHaveAttribute('open', '');
   await expect(page.getByRole('button', { name: /against the real build/ })).toHaveCount(0);
-  await d.locator('summary').click();
+  await d.locator(':scope > summary').click();
   await expect(d).toHaveAttribute('open', '');
   await expect(page.getByRole('button', { name: /against the real build/ })).toHaveCount(
     PROPERTIES.length,

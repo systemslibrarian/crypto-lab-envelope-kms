@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --coverage && node --test tests/publish-request.test.mjs",
     "test:a11y": "playwright test",
     "test:e2e": "playwright test",
+    "test:key-handles:mutations": "node scripts/key-handle-mutations.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

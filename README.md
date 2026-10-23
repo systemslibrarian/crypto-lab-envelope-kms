@@ -14,11 +14,12 @@ Envelope encryption is the operational layer of modern cryptographic architectur
 - **RFC 3394** AES Key Wrap and **RFC 5649** padded Key Wrap, validated against the official test vectors.
 - A **KMS-style API surface** (`CreateKey`, `GenerateDataKey`, `Encrypt`, `Decrypt`, `ReEncrypt`, `RotateKey`, `ScheduleKeyDeletion`).
 - A **who may unwrap?** exercise: with a valid handle and intact wrap, the log-only `Decrypt` call accepts Mallory's caller label; an opt-in caller/key/operation grant rejects that label before unwrap, while Alice's grant succeeds. The labels are unverified browser strings, not authenticated identities.
+- A **"What may this key do?"** exercise with a separate key-handle API: compare fixed roles, the default, with intentionally unsafe mutable usages. Direct key reads are refused in both, but allowing a wrapping key to gain byte-returning decrypt permission exposes a sensitive, wrappable target. Real recovered bytes open an independent AES-GCM challenge, and the result is shown as an exposure alarm. A legitimate unwrap-to-handle still works with fixed roles.
 - **Versioned KEK rotation** with `active`, `decrypt-only`, and `pending-deletion` states.
 - A **SHA-256 hash-chained audit log** with a tamper-detection demo that highlights the exact digest byte that changed and draws the broken link between an entry's hash and the next entry's `prev_hash`.
 - A **"Try to Break It" security lab** — one-click experiments that run the _real_ primitives and attempt to defeat each guarantee (wrong AAD, tampered ciphertext, cross-tenant unwrap, corrupted key wrap, rotation), so the properties are demonstrated rather than asserted. It sits behind a **"Ready to go deeper?"** disclosure so the page opens with intuition and layers the attacks on top.
 
-The normal security model assumes KEKs stay inside a trust boundary and the audit log is append-only. The separate compromise exhibit deliberately violates the KEK assumption. See [the compromise architecture](docs/compromise.md).
+The normal security model assumes KEKs stay inside a trust boundary and the audit log is append-only. The separate compromise exhibit deliberately violates the KEK assumption. See [the compromise architecture](docs/compromise.md). The key-handle exercise models operation policy in its own in-memory token; the normal KMS API still deliberately returns raw DEKs. See [the key-handle extension brief](docs/key-handles-brief.md) for its exact trace, invariants and limits.
 
 ## When to Use It
 
@@ -32,7 +33,9 @@ The normal security model assumes KEKs stay inside a trust boundary and the audi
 
 **[systemslibrarian.github.io/crypto-lab-envelope-kms](https://systemslibrarian.github.io/crypto-lab-envelope-kms/)**
 
-Users can read the primer, generate KEKs, type their own plaintext and context, seal and watch the DEK be drawn / used / wrapped / zeroized in the "Watch the wrap" panel, open envelopes (and try to open them as a different tenant and watch the AAD binding refuse), compare log-only and granted unwrap requests, rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, tamper with the audit log to see the hash chain detect it, and — under "Ready to go deeper?" — run the security-properties experiments to watch the crypto reject every attack.
+Users can read the primer, generate KEKs, type their own plaintext and context, seal and watch the DEK be drawn / used / wrapped / zeroized in the "Watch the wrap" panel, open envelopes (and try to open them as a different tenant and watch the AAD binding refuse), compare log-only and granted unwrap requests, rotate a KEK and watch old envelopes still decrypt, re-wrap envelopes to the new version, tamper with the audit log to see the hash chain detect it, and — under "Ready to go deeper?" — run the security-properties experiments to compare defended and weakened results.
+
+In **"What may this key do?"** inside that advanced disclosure, choose fixed roles or intentionally unsafe mutable usages and a sensitive target that is either wrappable or nonextractable. **Run wrap-then-decrypt trace** shows the refused direct read, the permitted or refused calls, and the actual outcome. With mutable usages and a wrappable target, the trace discloses 32 key bytes and independently opens a WebCrypto AES-GCM challenge outside the handle API. Fixed roles refuse the permission change; a nonextractable target refuses wrapping under either policy. **Wrap and unwrap to a handle** demonstrates intended use: a wrappable target becomes a new sensitive, nonextractable data handle that can open the challenge while its bytes remain unavailable through direct reads.
 
 ## What Can Go Wrong
 
@@ -41,6 +44,7 @@ Users can read the primer, generate KEKs, type their own plaintext and context, 
 - **AAD / context misuse.** This lab passes the context as AES-GCM `additionalData`; a mismatched value fails the GCM tag check. Its RFC 3394/5649 key-wrap functions protect the wrapped key bytes but have no separate AAD argument. Changing only the context leaves the wrapped DEK intact; an application must consistently supply and check the intended context when opening ciphertext. See [WebCrypto AES-GCM](https://www.w3.org/TR/WebCryptoAPI/#aes-gcm) and [RFC 3394 §2.2.3.1](https://www.rfc-editor.org/rfc/rfc3394.html#section-2.2.3.1).
 - **Audit-log integrity assumptions.** Tamper detection relies on the hash chain plus an append-only store; if the log can be silently rewritten or truncated, the integrity guarantee is lost.
 - **Multi-tenant isolation gaps.** The normal `KmsApi.Decrypt` only logs its caller-supplied `principal` and grants use to anyone with a valid wrapped-key reference. The opt-in `decryptWithGrants` exercise checks a caller/key/`Decrypt` tuple before touching key material, but a real KMS also authenticates that caller and enforces key policies. [AWS KMS key policies](https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html) illustrate the production distinction. Neither path here provides a hardware HSM or non-extractable DEK: `Decrypt` returns raw key bytes, which the exercise zeroizes after comparison.
+- **Individually allowed calls can disclose a sensitive key.** In the separate handle model, sensitive means direct value reads are forbidden; wrappable means an encrypted key representation may leave the model. Those are different from nonextractable, which prevents wrapping. The mutable-usage trace uses the same real RFC 3394 AES Key Wrap mechanism for wrapping and byte-returning decryption, with its integrity check intact. AES-GCM verifies the recovered key's usefulness; it is not used to decrypt the wrap. The wrapping key is generated internally, has distinct key material and starts with wrapping/unwrapping permissions only. The fixed-role result applies to this executed trace, not every possible API composition or a deployed HSM. General import, copy, derive, authenticated callers and security across sessions are outside this model; broader E-K-01 coverage remains open. See the [brief](docs/key-handles-brief.md), [PKCS #11 v3.0 Base §4.10 and C_WrapKey](https://docs.oasis-open.org/pkcs11/pkcs11-base/v3.0/os/pkcs11-base-v3.0-os.html), and [Current Mechanisms Table 91 and §2.16.3](https://docs.oasis-open.org/pkcs11/pkcs11-curr/v3.0/os/pkcs11-curr-v3.0-os.html).
 
 ## Real-World Usage
 
@@ -59,7 +63,9 @@ npm install
 npm run dev
 ```
 
-Additional scripts: `npm run test` runs the suite (RFC vectors, envelope, audit chain, KEK store); `npm run ci` runs typecheck + lint + test + build (same as CI).
+Additional scripts: `npm run test` runs the suite (RFC vectors, envelope, audit chain, KEK store and key-handle policies); `npm run ci` runs typecheck + lint + test + build (same as CI).
+
+For the key-handle exercise, `npx vitest run src/kms/key-handles.test.ts` runs the focused model tests: an RFC 3394 §4.6 fixture, an independent native WebCrypto AES-KW comparison, actual challenge decryption, fixed-role and nonextractable refusals, protected-handle use, and malformed-input and state-isolation checks. The browser claims and accessibility states run through `npm run test:e2e`. `npm run test:key-handles:mutations` runs the focused mutation checks; use the committed baseline and restore procedure described in the [brief](docs/key-handles-brief.md). These checks cover the named trace and its controls, not an exhaustive API-security proof.
 
 ## Related Demos
 
