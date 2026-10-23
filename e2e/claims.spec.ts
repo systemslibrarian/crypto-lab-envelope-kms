@@ -1,3 +1,4 @@
+import { webcrypto } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -772,4 +773,221 @@ test('stolen KEK copies survive re-wrap; tenant isolation contains exposure', as
   await expect(rows).toHaveCount(4);
   await expect(rows.nth(1).locator('td')).toHaveText(['4/4', '4/4', '4/4', '0/4', '4/4']);
   await expect(rows.nth(2).locator('td')).toHaveText(['4/4', '0/4', '4/4', '0/4', '4/4']);
+});
+
+test.describe('Key-handle API claims', () => {
+  async function load(page: Page): Promise<void> {
+    await page.goto('.');
+    await page.locator('#deeper-summary').click();
+    await expect(page.locator('#key-handles-heading')).toBeVisible();
+  }
+
+  async function run(page: Page, legitimate = false): Promise<void> {
+    const button = page.locator(legitimate ? '#handle-legitimate' : '#handle-attack');
+    await button.click();
+    await expect(button).toBeEnabled();
+  }
+
+  async function runUnsafe(page: Page): Promise<void> {
+    await page.locator('#handle-policy').selectOption('mutable-usages');
+    await run(page);
+  }
+
+  async function displayedChallenge(page: Page): Promise<Record<string, string>> {
+    await page.locator('#handle-wire-details summary').click();
+    const values: Record<string, string> = {};
+    for (const name of ['iv', 'ciphertext', 'tag', 'aad']) {
+      const field = page.locator(`#handle-challenge-${name}`);
+      await expect(field).toBeVisible();
+      values[name] = (await field.innerText()).trim();
+    }
+    return values;
+  }
+
+  test('KHI-01 fixed roles refuse the transition while protected unwrap still works', async ({
+    page,
+  }) => {
+    await load(page);
+    await expect(page.locator('#handle-policy')).toHaveValue('fixed-roles');
+    await expect(page.locator('#handle-target')).toHaveValue('wrappable');
+    await run(page);
+    await expect(
+      page.locator('#handle-outcome'),
+      'KHI-01 fixed roles must block the executed trace',
+    ).toHaveAttribute('data-outcome', 'blocked-role');
+    await expect(page.locator('[data-operation="ReadValue"]')).toContainText('SENSITIVE_VALUE');
+    await expect(page.locator('[data-operation="WrapKey"] code')).toHaveText('OK');
+    await expect(page.locator('[data-operation="AddDecryptPermission"] code')).toHaveText(
+      'ROLE_LOCKED',
+    );
+    await expect(page.locator('[data-operation="Decrypt"] code')).toHaveText(
+      'OPERATION_NOT_PERMITTED',
+    );
+    await expect(page.locator('[data-key-role="wrapping-key"] .handle-decrypt')).toHaveText('no');
+    await expect(page.locator('#handle-escaped-key')).toHaveCount(0);
+    await run(page, true);
+    await expect(page.locator('#handle-outcome')).toHaveAttribute(
+      'data-outcome',
+      'protected-handle',
+    );
+    await expect(page.locator('[data-operation="ReadRestoredValue"]')).toContainText(
+      'SENSITIVE_VALUE',
+    );
+    await expect(page.locator('#handle-proof')).toContainText(
+      'Sensitive: true · Extractable: false',
+    );
+    const recovered = await page.locator('#handle-legitimate-message').innerText();
+    expect(recovered, 'KHI-01 protected handle must recover the exact rendered challenge').toBe(
+      await page.locator('#handle-expected-plaintext').textContent(),
+    );
+  });
+
+  test('KHI-02 nonextractable targets refuse wrapping under both policies', async ({ page }) => {
+    await load(page);
+    await page.locator('#handle-target').selectOption('nonextractable');
+    for (const policy of ['fixed-roles', 'mutable-usages']) {
+      await page.locator('#handle-policy').selectOption(policy);
+      await run(page);
+      await expect(
+        page.locator('#handle-outcome'),
+        `KHI-02 nonextractability must stop wrapping under ${policy}`,
+      ).toHaveAttribute('data-outcome', 'blocked-target');
+      await expect(page.locator('[data-operation="WrapKey"] code')).toHaveText(
+        'KEY_NOT_EXTRACTABLE',
+      );
+      await expect(page.locator('[data-operation="AddDecryptPermission"]')).toHaveCount(0);
+      await expect(page.locator('#handle-wrapped')).toHaveCount(0);
+      await expect(page.locator('#handle-escaped-key')).toHaveCount(0);
+    }
+  });
+
+  test('KHI-03 the displayed escaped bytes independently open the displayed challenge', async ({
+    page,
+  }) => {
+    await load(page);
+    await runUnsafe(page);
+    await expect(page.locator('#handle-outcome')).toHaveAttribute('data-outcome', 'exposed');
+    await expect(page.locator('#handle-status')).toContainText('KEY EXPOSED: 32 bytes');
+    await expect(page.locator('[data-key-role="wrapping-key"] .handle-decrypt')).toHaveText('yes');
+    for (const operation of ['WrapKey', 'AddDecryptPermission', 'Decrypt', 'OpenOutsideToken']) {
+      await expect(page.locator(`[data-operation="${operation}"] code`)).toHaveText('OK');
+    }
+    const escaped = (await page.locator('#handle-escaped-key').innerText()).trim();
+    expect(escaped, 'KHI-03 escaped AES-256 key must contain 32 actual bytes').toMatch(
+      /^[a-f0-9]{64}$/,
+    );
+    const challenge = await displayedChallenge(page);
+    const key = await webcrypto.subtle.importKey(
+      'raw',
+      Buffer.from(escaped, 'hex'),
+      'AES-GCM',
+      false,
+      ['decrypt'],
+    );
+    // Independent Node WebCrypto, using only page-rendered bytes, never an app verifier.
+    let opened: ArrayBuffer | undefined;
+    let failure: unknown;
+    try {
+      opened = await webcrypto.subtle.decrypt(
+        {
+          name: 'AES-GCM',
+          iv: Buffer.from(challenge.iv, 'hex'),
+          additionalData: Buffer.from(challenge.aad, 'hex'),
+          tagLength: 128,
+        },
+        key,
+        Buffer.from(challenge.ciphertext + challenge.tag, 'hex'),
+      );
+    } catch (error) {
+      failure = error;
+    }
+    expect(
+      failure,
+      'KHI-03 displayed escaped key must authenticate the independently opened challenge',
+    ).toBeUndefined();
+    const plaintext = Buffer.from(opened!).toString('utf8');
+    expect(
+      plaintext,
+      'KHI-03 independent plaintext must equal the expected synthetic message',
+    ).toBe(await page.locator('#handle-expected-plaintext').innerText());
+    expect(plaintext).toBe(await page.locator('#handle-recovered-message').innerText());
+    expect((await page.locator('#handle-wrapped').innerText()).length).toBe(80);
+  });
+
+  test('KHI-04 successful primitive checks retain a visible key-confidentiality limitation', async ({
+    page,
+  }) => {
+    await load(page);
+    await runUnsafe(page);
+    await expect(page.locator('#handle-outcome')).toHaveAttribute('data-outcome', 'exposed');
+    await expect(page.locator('#handle-policy-note')).toContainText('Intentionally unsafe');
+    for (const operation of ['WrapKey', 'AddDecryptPermission', 'Decrypt', 'OpenOutsideToken']) {
+      await expect(
+        page.locator(`[data-operation="${operation}"] code`),
+        `KHI-04 ${operation} must succeed in the disclosure fixture`,
+      ).toHaveText('OK');
+    }
+    await expect(
+      page.locator('#handle-limit'),
+      'KHI-04 exposure limitation must remain visible after a successful primitive trace',
+    ).toHaveText(
+      'Valid cryptographic checks do not prevent key disclosure when this API permits conflicting operations.',
+    );
+    await expect(page.locator('#handle-limit')).toBeVisible();
+    await expect(page.locator('#handle-scope')).toContainText(
+      'internally generated, nonexportable wrapping keys',
+    );
+    await expect(page.locator('#handle-scope')).toContainText(
+      'General import, copy, derive and hardware isolation are outside this model',
+    );
+    const tone = await page
+      .locator('#handle-status')
+      .evaluate((element) => getComputedStyle(element).color);
+    const alarm = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--crimson').trim(),
+    );
+    const normalized = await page.evaluate((color) => {
+      const temporary = document.createElement('span');
+      temporary.style.color = color;
+      document.body.append(temporary);
+      const result = getComputedStyle(temporary).color;
+      temporary.remove();
+      return result;
+    }, alarm);
+    expect(tone).toBe(normalized);
+  });
+
+  test('KHI-05 option changes retire results, same options preserve them, resets replace handles', async ({
+    page,
+  }) => {
+    await load(page);
+    await runUnsafe(page);
+    const originalKey = await page.locator('#handle-escaped-key').innerText();
+    const originalHandle = await page
+      .locator('[data-key-role="wrapping-key"] .handle-id')
+      .innerText();
+    await page.locator('#handle-policy').selectOption('mutable-usages');
+    await page.locator('#handle-target').selectOption('wrappable');
+    await expect(page.locator('#handle-escaped-key')).toHaveText(originalKey);
+    await page.locator('#create-key').click();
+    await expect(page.locator('#handle-escaped-key')).toHaveText(originalKey);
+    await page.locator('#handle-policy').selectOption('fixed-roles');
+    await expect(page.locator('#handle-outcome')).toHaveAttribute('data-outcome', 'ready');
+    await expect(page.locator('#handle-escaped-key')).toHaveCount(0);
+    await expect(page.locator('#handle-trace li')).toHaveCount(0);
+    await expect(page.locator('#handle-wire-details')).toHaveCount(0);
+    await runUnsafe(page);
+    await page.locator('#handle-target').selectOption('nonextractable');
+    await expect(page.locator('#handle-status')).toContainText('Previous results retired');
+    await expect(page.locator('#handle-escaped-key')).toHaveCount(0);
+    await page.locator('#handle-reset').click();
+    await expect(page.locator('#handle-reset')).toBeFocused();
+    await expect(page.locator('[data-key-role="wrapping-key"] .handle-id')).not.toHaveText(
+      originalHandle,
+    );
+    await page.locator('#reset-btn').click();
+    await expect(page.locator('#handle-policy')).toHaveValue('fixed-roles');
+    await expect(page.locator('#handle-target')).toHaveValue('wrappable');
+    await expect(page.locator('#handle-trace li')).toHaveCount(0);
+  });
 });

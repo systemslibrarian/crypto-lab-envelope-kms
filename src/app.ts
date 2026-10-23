@@ -1,4 +1,5 @@
 import { compromisePanel } from './ui/compromise';
+import { keyHandlesPanel } from './ui/key-handles';
 import { aeadOpen, aeadSeal } from './crypto/aead';
 import { decoder, encoder, zeroize } from './crypto/bytes';
 import { runRfcVectors } from './crypto/rfc-vectors';
@@ -468,10 +469,11 @@ function appMarkup(): string {
 
   <section class="panel deeper" aria-labelledby="deeper-heading">
     <h2 id="deeper-heading">Ready to go deeper?</h2>
-    <p class="panel-lede">Now that you can see the mechanism, put the guarantees under attack. Each experiment runs the <em>real</em> primitives and tries to defeat a property — the crypto refuses in front of you.</p>
+    <p class="panel-lede">Now that you can see the mechanism, put the guarantees under attack. Each experiment runs the <em>real</em> primitives. Compare cryptographic refusals with an API sequence that exposes a key even when its integrity checks pass.</p>
     <details class="deeper-details"${state.deepOpen ? ' open' : ''}>
       <summary id="deeper-summary">Open the security lab &amp; wire internals</summary>
       <div class="deeper-body">
+        <div id="key-handles-mount"></div>
         ${renderSecurityLab(state.securityResults)}
         ${explainers()}
         ${renderRequestFlow(state.flow)}
@@ -799,6 +801,7 @@ function bind(root: HTMLElement): void {
   });
   root.querySelector('#reset-btn')?.addEventListener('click', () => {
     compromiseView = undefined;
+    keyHandlesView = undefined;
     state.keyId = null;
     state.envelopes = [];
     state.timeline = ['Ready'];
@@ -934,6 +937,7 @@ function focusSelector(el: Element | null): string | null {
 }
 
 let compromiseView: HTMLElement | undefined;
+let keyHandlesView: HTMLElement | undefined;
 
 export function render(root: HTMLElement): void {
   const selector = focusSelector(document.activeElement);
@@ -941,6 +945,8 @@ export function render(root: HTMLElement): void {
   bind(root);
   compromiseView ??= compromisePanel();
   root.querySelector('#compromise-mount')?.replaceWith(compromiseView);
+  keyHandlesView ??= keyHandlesPanel();
+  root.querySelector('#key-handles-mount')?.replaceWith(keyHandlesView);
   if (selector) {
     const next = root.querySelector<HTMLElement>(selector);
     // Preserve focus across the re-render; the element may be gone (e.g. after

@@ -1,0 +1,184 @@
+.key-handles {
+  margin-top: 1.5rem;
+  min-width: 0;
+}
+
+.key-handles .handle-controls,
+.key-handles .handle-keys {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.key-handles .handle-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-hi);
+}
+
+.key-handles .handle-controls select {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  background: var(--panel-strong);
+}
+
+.key-handles .controls-row {
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.key-handles .chip {
+  min-height: 44px;
+  white-space: normal;
+  text-align: left;
+}
+
+.key-handles .handle-key {
+  padding: 1rem;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  background: var(--panel-strong);
+  min-width: 0;
+}
+
+.key-handles h3 {
+  color: var(--text-hi);
+  font-size: 1rem;
+}
+
+.key-handles .handle-id,
+.key-handles code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.key-handles .handle-id {
+  display: block;
+  margin: 0.35rem 0 0.8rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.key-handles .handle-key dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.7rem;
+  padding: 0.3rem 0;
+}
+
+.key-handles dt {
+  color: var(--text-dim);
+}
+
+.key-handles .handle-key dd {
+  color: var(--text-hi);
+}
+
+.key-handles .handle-key p,
+.key-handles #handle-scope,
+.key-handles .handle-model-details p {
+  margin-top: 0.8rem;
+}
+
+.key-handles .handle-warning {
+  color: var(--amber);
+  padding-left: 0.8rem;
+  border-left: 3px solid var(--amber);
+}
+
+.key-handles .handle-outcome {
+  padding: 1rem;
+  border: 1px solid var(--control-border);
+  border-left-width: 4px;
+  border-radius: 4px;
+  background: var(--panel-strong);
+}
+
+.key-handles .handle-outcome[data-outcome='exposed'],
+.key-handles .handle-outcome[data-outcome='error'] {
+  border-color: var(--crimson);
+}
+
+.key-handles .handle-outcome[data-outcome='exposed'] #handle-status,
+.key-handles .handle-outcome[data-outcome='error'] #handle-status {
+  color: var(--crimson);
+  font-weight: 600;
+}
+
+.key-handles .handle-outcome[data-outcome='protected-handle'] {
+  border-left-color: var(--teal);
+}
+
+.key-handles #handle-proof p {
+  margin-top: 0.6rem;
+}
+
+.key-handles #handle-escaped-key {
+  display: block;
+  color: var(--text-hi);
+}
+
+.key-handles .handle-trace {
+  list-style-position: inside;
+  margin: 1rem 0;
+}
+
+.key-handles .handle-trace li {
+  margin: 0.6rem 0;
+  padding: 0.75rem;
+  border-left: 2px solid var(--control-border);
+  background: var(--panel-strong);
+}
+
+.key-handles .handle-trace li > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.key-handles .handle-trace li p {
+  margin-top: 0.3rem;
+}
+
+.key-handles .handle-wire-fields > div {
+  margin: 0.8rem 0;
+}
+
+.key-handles .handle-limit {
+  padding: 0.8rem;
+  border-left: 3px solid var(--amber);
+  background: var(--panel-strong);
+  margin-top: 1rem;
+}
+
+.key-handles details {
+  margin-top: 1rem;
+}
+
+.key-handles summary {
+  cursor: pointer;
+  color: var(--text-hi);
+  padding: 0.6rem 0;
+}
+
+.key-handles a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.key-handles :is(button, select, summary, a):focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 4px;
+}
+
+@media (max-width: 639px) {
+  .key-handles .handle-controls,
+  .key-handles .handle-keys {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
