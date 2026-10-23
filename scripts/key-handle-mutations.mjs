@@ -153,6 +153,73 @@ function snapshotBundles() {
   return { sha256: sha256(JSON.stringify(entries)), assets: entries };
 }
 
+function cleanBuildOutput(label, restoring = false) {
+  if (interrupted && !restoring) throw failure('INTERRUPTED', 'Interrupted by ' + interrupted);
+  const directory = path.join(ROOT, 'dist');
+  const observed = {
+    label,
+    directory: 'dist',
+    startedAt: new Date().toISOString(),
+    before: { exists: false },
+    absentAfter: false,
+  };
+  report.outputCleanups.push(observed);
+  saveReport();
+  try {
+    const existing = fs.lstatSync(directory, { throwIfNoEntry: false });
+    observed.before.exists = Boolean(existing);
+    if (existing) {
+      requireThat(
+        existing.isDirectory() && !existing.isSymbolicLink(),
+        'OUTPUT_CLEAN_FAILED',
+        label + ': dist must be a real directory before cleaning it.',
+      );
+      const entries = [];
+      function walk(current) {
+        for (const entry of fs
+          .readdirSync(current, { withFileTypes: true })
+          .sort((a, b) => a.name.localeCompare(b.name))) {
+          const full = path.join(current, entry.name);
+          const file = path.relative(ROOT, full).split(path.sep).join('/');
+          if (entry.isDirectory()) {
+            entries.push({ file, type: 'directory' });
+            walk(full);
+          } else {
+            requireThat(
+              entry.isFile(),
+              'OUTPUT_CLEAN_FAILED',
+              label + ': unexpected nonregular output entry ' + file,
+            );
+            const bytes = fs.readFileSync(full);
+            entries.push({ file, type: 'file', bytes: bytes.length, sha256: sha256(bytes) });
+          }
+        }
+      }
+      walk(directory);
+      observed.before.manifest = { sha256: sha256(JSON.stringify(entries)), entries };
+      // Preserve the complete old tree's manifest before removing any output.
+      // Delete the directory itself, not only the files known to the last build.
+      saveReport();
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+    observed.absentAfter = !fs.lstatSync(directory, { throwIfNoEntry: false });
+    requireThat(
+      observed.absentAfter,
+      'OUTPUT_CLEAN_FAILED',
+      label + ': dist still exists after whole-directory cleanup.',
+    );
+  } catch (error) {
+    observed.failure = {
+      classification: error.classification || 'OUTPUT_CLEAN_FAILED',
+      message: error.message,
+    };
+    throw failure('OUTPUT_CLEAN_FAILED', label + ': ' + error.message);
+  } finally {
+    observed.finishedAt = new Date().toISOString();
+    saveReport();
+  }
+}
+
 function saveReport() {
   if (!report || !runDirectory) return;
   const target = path.join(runDirectory, 'report.json');
@@ -274,6 +341,7 @@ function requireSuccessfulCommand(observed, classification) {
 }
 
 async function build(label, restoring = false) {
+  cleanBuildOutput(label, restoring);
   const observed = await command(label, executable('npm'), ['run', 'build'], { restoring });
   requireSuccessfulCommand(observed, 'DOES_NOT_BUILD');
   return observed;
@@ -309,6 +377,9 @@ function reportTests(browserReport) {
 }
 
 async function browser(label, ids, restoring = false) {
+  // Playwright's webServer builds again; give that build the same empty-output
+  // starting point as the explicit build whose complete asset manifest we hash.
+  cleanBuildOutput(label, restoring);
   const jsonPath = path.join(runDirectory, label + '.json');
   const grep = '\\b(?:' + ids.join('|') + ')\\b';
   const observed = await command(
@@ -331,6 +402,8 @@ async function browser(label, ids, restoring = false) {
       test: true,
       restoring,
       env: {
+        // The webServer plugin otherwise suppresses the second build's stdout.
+        DEBUG: 'pw:webserver',
         PLAYWRIGHT_JSON_OUTPUT_NAME: jsonPath,
         PLAYWRIGHT_JSON_OUTPUT_FILE: jsonPath,
       },
@@ -589,6 +662,7 @@ async function main() {
     baseline: {},
     mutations: [],
     commands: [],
+    outputCleanups: [],
   };
   process.on('SIGINT', onInterrupt);
   process.on('SIGTERM', onInterrupt);
