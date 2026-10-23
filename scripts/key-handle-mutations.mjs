@@ -145,11 +145,14 @@ function snapshotBundles() {
   }
   walk(assets);
   requireThat(files.length > 0, 'MISSING_BUNDLE', 'Build produced no JavaScript assets.');
-  const entries = files.sort().map((file) => ({
-    file: path.relative(ROOT, file).split(path.sep).join('/'),
-    bytes: fs.statSync(file).size,
-    sha256: sha256(fs.readFileSync(file)),
-  }));
+  const entries = files.sort().map((file) => {
+    const bytes = fs.readFileSync(file);
+    return {
+      file: path.relative(ROOT, file).split(path.sep).join('/'),
+      bytes: bytes.length,
+      sha256: sha256(bytes),
+    };
+  });
   return { sha256: sha256(JSON.stringify(entries)), assets: entries };
 }
 
@@ -682,12 +685,20 @@ async function main() {
     report.baseline.sourceFiles = [];
     for (const relative of committedFiles) {
       const file = path.join(ROOT, relative);
-      requireThat(
-        fs.lstatSync(file).isFile(),
-        'INVALID_SOURCE',
-        relative + ' must be a regular committed file.',
-      );
-      const bytes = fs.readFileSync(file);
+      // Reject symbolic links at open time, then inspect and read that same
+      // descriptor so a path replacement cannot race the regular-file check.
+      const descriptor = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+      let bytes;
+      try {
+        requireThat(
+          fs.fstatSync(descriptor).isFile(),
+          'INVALID_SOURCE',
+          relative + ' must be a regular committed file.',
+        );
+        bytes = fs.readFileSync(descriptor);
+      } finally {
+        fs.closeSync(descriptor);
+      }
       const committed = git(['show', 'HEAD:' + relative], { encoding: null });
       requireThat(
         bytes.equals(committed),
