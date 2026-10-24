@@ -991,3 +991,224 @@ test.describe('Key-handle API claims', () => {
     await expect(page.locator('#handle-trace li')).toHaveCount(0);
   });
 });
+
+test.describe('Bounded key-handle state-search claims', () => {
+  async function loadSearch(page: Page): Promise<void> {
+    await page.goto('.');
+    await page.locator('#deeper-summary').click();
+    await expect(page.locator('#state-search-heading')).toBeVisible();
+  }
+
+  async function runSearch(page: Page): Promise<void> {
+    const button = page.locator('#state-search-run');
+    await button.click();
+    await expect(button).toBeEnabled();
+  }
+
+  async function displayedSearchChallenge(page: Page): Promise<Record<string, string>> {
+    const values: Record<string, string> = {};
+    for (const name of ['iv', 'ciphertext', 'tag', 'aad']) {
+      const field = page.locator(`#state-search-challenge-${name}`);
+      await expect(field).toBeVisible();
+      values[name] = (await field.innerText()).trim();
+    }
+    return values;
+  }
+
+  test('KHS-01 fixed templates exhaust all three displayed bounded presets', async ({ page }) => {
+    await loadSearch(page);
+    await expect(page.locator('#state-search-policy')).toHaveValue('fixed-template');
+    for (const scenario of ['known-key-import', 'same-value-handles', 'mutable-role']) {
+      await page.locator('#state-search-scenario').selectOption(scenario);
+      await runSearch(page);
+      await expect(
+        page.locator('#state-search-outcome'),
+        `KHS-01 fixed ${scenario} search must complete without a disclosure witness`,
+      ).toHaveAttribute('data-outcome', 'protected');
+      await expect(page.locator('#state-search-status')).toContainText(
+        'No disclosure found in all',
+      );
+      await expect(page.locator('#state-search-status')).toContainText(
+        'through 4 successful API calls',
+      );
+      await expect(page.locator('#state-search-complete')).toContainText(
+        'Complete within these bounds',
+      );
+      await expect(page.locator('#state-search-witness li')).toHaveCount(0);
+      await expect(page.locator('#state-search-escaped-key')).toHaveCount(0);
+    }
+  });
+
+  test('KHS-02 the searched known-key import witness recovers a real target', async ({ page }) => {
+    await loadSearch(page);
+    await page.locator('#state-search-policy').selectOption('per-handle-templates');
+    await runSearch(page);
+    await expect(page.locator('#state-search-outcome')).toHaveAttribute('data-outcome', 'exposed');
+    await expect(page.locator('#state-search-status')).toContainText(
+      'DISCLOSURE WITNESS FOUND at depth 3',
+    );
+    await expect(page.locator('#state-search-witness li')).toHaveCount(3);
+    await expect(page.locator('#state-search-witness li').nth(0)).toContainText('EncryptKnown');
+    await expect(page.locator('#state-search-witness li').nth(1)).toContainText('kw-wrap-only');
+    await expect(page.locator('#state-search-witness li').nth(2)).toContainText('WrapKey');
+
+    const escaped = (await page.locator('#state-search-escaped-key').innerText()).trim();
+    expect(escaped, 'KHS-02 must print the 32 recovered target bytes').toMatch(/^[a-f0-9]{64}$/);
+    const challenge = await displayedSearchChallenge(page);
+    const key = await webcrypto.subtle.importKey(
+      'raw',
+      Buffer.from(escaped, 'hex'),
+      'AES-GCM',
+      false,
+      ['decrypt'],
+    );
+    let opened: ArrayBuffer | undefined;
+    let failure: unknown;
+    try {
+      opened = await webcrypto.subtle.decrypt(
+        {
+          name: 'AES-GCM',
+          iv: Buffer.from(challenge.iv, 'hex'),
+          additionalData: Buffer.from(challenge.aad, 'hex'),
+          tagLength: 128,
+        },
+        key,
+        Buffer.from(challenge.ciphertext + challenge.tag, 'hex'),
+      );
+    } catch (error) {
+      failure = error;
+    }
+    expect(
+      failure,
+      'KHS-02 displayed escaped key must authenticate the independently opened challenge',
+    ).toBeUndefined();
+    expect(
+      Buffer.from(opened!).toString('utf8'),
+      'KHS-02 independent plaintext must equal the displayed expected message',
+    ).toBe(await page.locator('#state-search-expected-plaintext').innerText());
+  });
+
+  test('KHS-03 same-value search uses two distinct handles and conflicting roles', async ({
+    page,
+  }) => {
+    await loadSearch(page);
+    await page.locator('#state-search-scenario').selectOption('same-value-handles');
+    await page.locator('#state-search-policy').selectOption('per-handle-templates');
+    await runSearch(page);
+    await expect(
+      page.locator('#state-search-status'),
+      'KHS-03 equal-value handles with distinct templates must produce the depth-four witness',
+    ).toContainText('DISCLOSURE WITNESS FOUND at depth 4');
+    await expect(page.locator('#state-search-witness li')).toHaveCount(4);
+    const trace = await page.locator('#state-search-witness li').allInnerTexts();
+    expect(trace.filter((line) => line.includes('UnwrapAs'))).toHaveLength(2);
+    expect(trace.some((line) => line.includes('kw-wrap-only'))).toBe(true);
+    expect(trace.some((line) => line.includes('kw-decrypt-only'))).toBe(true);
+    await expect(
+      page.locator('#state-search-symbolic-alias-proof'),
+      'KHS-03 symbolic terminal state must retain two equal-value handle objects',
+    ).toContainText('retained 2 distinct opaque-pivot handles');
+    await expect(page.locator('#state-search-symbolic-alias-proof')).toContainText('KW_WRAP_KEY');
+    await expect(page.locator('#state-search-symbolic-alias-proof')).toContainText(
+      'KW_DECRYPT_BYTES',
+    );
+    await expect(page.locator('#state-search-alias-proof')).toContainText('Distinct handles');
+    await expect(page.locator('#state-search-alias-proof')).toContainText(
+      'contained equal key bytes',
+    );
+    await expect(page.locator('#state-search-escaped-key')).toHaveText(/^[a-f0-9]{64}$/);
+  });
+
+  test('KHS-04 bounds, attacker model, and non-proof limitation remain visible', async ({
+    page,
+  }) => {
+    await loadSearch(page);
+    await expect(page.locator('.state-search-bounds')).toContainText(
+      '4 successful API calls, breadth first',
+    );
+    await expect(page.locator('.state-search-bounds')).toContainText(
+      'at most 4 handles and 4 blobs',
+    );
+    await expect(page.locator('.state-search-bounds')).toContainText(
+      '50,000 retained non-witness states',
+    );
+    await expect(page.locator('#state-search-knowledge')).toContainText(
+      'raw caller-known-key bytes',
+    );
+    await expect(page.locator('#state-search-rules li')).toHaveCount(6);
+    await expect(page.locator('#state-search-invariant')).toContainText(
+      'protected-target not in attacker-known raw values',
+    );
+    await expect(
+      page.locator('#state-search-limit'),
+      'KHS-04 bounded-search limitation must stay visible',
+    ).toContainText('not a PKCS #11 implementation');
+    await expect(page.locator('#state-search-limit')).toContainText('or security proof');
+    await expect(page.locator('#state-search-scope')).toContainText(
+      'distinct objects containing equal key bytes',
+    );
+    await expect(page.locator('#state-search-scope')).toContainText(
+      'caller-selected role metadata is outside that blob',
+    );
+  });
+
+  test('KHS-05 option changes and resets retire evidence', async ({ page }) => {
+    await loadSearch(page);
+    await page.locator('#state-search-policy').selectOption('per-handle-templates');
+    await runSearch(page);
+    const escaped = await page.locator('#state-search-escaped-key').innerText();
+    await page.locator('#state-search-policy').selectOption('per-handle-templates');
+    await expect(page.locator('#state-search-escaped-key')).toHaveText(escaped);
+    await page.locator('#create-key').click();
+    await expect(page.locator('#state-search-escaped-key')).toHaveText(escaped);
+    await page.locator('#state-search-scenario').selectOption('same-value-handles');
+    await expect(
+      page.locator('#state-search-outcome'),
+      'KHS-05 changing the preset must retire the prior witness',
+    ).toHaveAttribute('data-outcome', 'ready');
+    await expect(page.locator('#state-search-status')).toContainText('Previous result retired');
+    await expect(page.locator('#state-search-witness li')).toHaveCount(0);
+    await expect(page.locator('#state-search-escaped-key')).toHaveCount(0);
+    await page.locator('#state-search-reset').click();
+    await expect(page.locator('#state-search-reset')).toBeFocused();
+    await expect(page.locator('#state-search-scenario')).toHaveValue('known-key-import');
+    await expect(page.locator('#state-search-policy')).toHaveValue('fixed-template');
+    await expect(page.locator('#state-search-cap')).toHaveValue('50000');
+
+    await page.locator('#state-search-policy').selectOption('per-handle-templates');
+    await runSearch(page);
+    await expect(page.locator('#state-search-outcome')).toHaveAttribute('data-outcome', 'exposed');
+    await expect(page.locator('#state-search-escaped-key')).toHaveCount(1);
+    await page.locator('#reset-btn').click();
+    await expect(page.locator('#state-search-status')).toHaveText(
+      'Not run. Choose a preset and policy, then start the explorer.',
+    );
+    await expect(page.locator('#state-search-outcome')).toHaveAttribute('data-outcome', 'ready');
+    await expect(page.locator('#state-search-escaped-key')).toHaveCount(0);
+    await expect(page.locator('#state-search-scenario')).toHaveValue('known-key-import');
+    await expect(page.locator('#state-search-policy')).toHaveValue('fixed-template');
+    await expect(page.locator('#state-search-cap')).toHaveValue('50000');
+  });
+
+  test('KHS-06 a state-cap cutoff is incomplete and never relabeled as no witness', async ({
+    page,
+  }) => {
+    await loadSearch(page);
+    await page.locator('#state-search-cap').selectOption('1');
+    await runSearch(page);
+    await expect(page.locator('#state-search-outcome')).toHaveAttribute(
+      'data-outcome',
+      'incomplete',
+    );
+    await expect(
+      page.locator('#state-search-status'),
+      'KHS-06 hitting the selected state cap must be reported as incomplete',
+    ).toContainText('SEARCH INCOMPLETE');
+    await expect(page.locator('#state-search-status')).toContainText(
+      '1 retained-non-witness-state cap',
+    );
+    await expect(page.locator('#state-search-status')).not.toContainText('No disclosure found');
+    await expect(page.locator('#state-search-witness li')).toHaveCount(0);
+    await expect(page.locator('#state-search-escaped-key')).toHaveCount(0);
+  });
+});

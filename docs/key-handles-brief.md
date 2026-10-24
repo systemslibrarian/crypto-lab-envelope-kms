@@ -2,7 +2,10 @@
 
 This first E-K-01 extension adds a small stateful API experiment to Envelope KMS.
 It complements the existing caller-grant exercise. It does not change the normal
-KMS API, whose `GenerateDataKey` and `Decrypt` deliberately return raw DEKs.
+KMS API, whose `GenerateDataKey` and `Decrypt` deliberately return raw DEKs. The
+later, isolated breadth-first explorer is specified in the
+[bounded state-search brief](key-handle-state-search-brief.md); it does not widen
+this `HandleToken` API.
 
 ## 1. Scope
 
@@ -26,10 +29,12 @@ be described as nonextractable.
 the challenge. A wrapped 32-byte target is 40 bytes. The model does not decrypt an
 RFC 3394 blob with AES-GCM.
 
-**Non-goals:** no hardware token, authenticated caller, deployed HSM test, full
-PKCS #11 emulator, exhaustive state search, security proof, general key import,
-copy, derive, restore, multi-session sharing, replay defense, or side-channel claim.
-This is not production crypto; it is a browser teaching model with real primitives.
+**Non-goals for this manual-trace model:** no hardware token, authenticated caller,
+deployed HSM test, full PKCS #11 emulator, exhaustive state search, security proof,
+general key import, copy, derive, restore, multi-session sharing, replay defense,
+or side-channel claim. The companion explorer models a finite import alphabet in
+a separate symbolic state; it does not add general import here. This is not
+production crypto; it is a browser teaching model with real primitives.
 
 ## 2. Security and correctness invariants
 
@@ -64,6 +69,8 @@ someone who already knows a wrapping key from decrypting outside the API.
 - `src/kms/key-handles.test.ts`: one RFC 3394 section 4.6 known-answer fixture,
   independent native WebCrypto AES-KW comparison, actual external challenge
   decryption, and permission/input/ownership/atomicity tests.
+- `src/kms/key-handle-search.ts`: a separate serializable bounded model and
+  concrete witness replayer. It never reaches into `HandleToken` private state.
 - The UI owns the visible trace and calls this API. It must not fabricate a result
   from the selected policy, expose raw keys through metadata, or treat an unexpected
   exception as evidence that a defense worked.
@@ -85,7 +92,8 @@ separate legitimate unwrap demonstrates that fixed roles preserve intended use.
 
 Keep the completed trace's limitation visible: valid cryptographic checks do not
 prevent key disclosure when this API permits conflicting operations. Only the
-executed trace is tested; there is no claim that all API sequences were explored.
+executed trace is tested by this panel. The companion panel explores its separately
+displayed finite alphabet and bounds; neither panel makes an unbounded claim.
 Changing an input retires the prior verdict; selecting its current value is a no-op.
 Reset starts a new session. The layout stacks below 640px and all actions are
 keyboard operable, labelled, and announced through a live result region.
@@ -124,14 +132,14 @@ allowing the fixed-role transition, allowing a nonextractable wrap, fabricating
 recovery, or removing the limitation fails the owning test after a successful build.
 Preserve the master template's commit-before-mutation and immediate restore rules.
 
-## 7. Extension seams
+## 7. Relationship to the bounded explorer
 
-- The fixed unwrap template is the future seam for import/restore and authenticated
-  role preservation. A general import feature needs trusted-wrapper provenance and
-  alias/copy policy; do not add a raw-key import merely to create another handle.
-- The explicit `HandlePolicy` and `allowDecrypt` transition could later supply a
-  bounded state explorer. Such an explorer must publish its operation alphabet,
-  initial state, search limits, and witness, and cannot claim an unbounded proof.
+- This model's fixed unwrap template remains the production-shaped seam for
+  import/restore and authenticated role preservation. A general import feature
+  would still need provenance, alias/copy policy, authentication, and atomic errors.
+- The separate bounded explorer now publishes its operation alphabet, initial
+  knowledge, search limits, cutoff status, and shortest witness. It deliberately
+  models values and handles symbolically instead of loosening this class.
 - A later trusted-wrap lesson can add a distinct policy without replacing the
   current narrow claim with a blanket assertion that PKCS #11 or HSMs are broken.
 
@@ -139,13 +147,12 @@ Preserve the master template's commit-before-mutation and immediate restore rule
 
 - [RFC 3394, sections 2.2 and 4.6](https://www.rfc-editor.org/rfc/rfc3394.html):
   the actual wrapping/integrity algorithm and 256/256 known-answer fixture.
-- [PKCS #11 v3.0 Current Mechanisms, Table 91 and section 2.16.3](https://docs.oasis-open.org/pkcs11/pkcs11-curr/v3.0/os/pkcs11-curr-v3.0-os.html):
-  AES Key Wrap supports single-part encrypt/decrypt as well as wrap/unwrap.
-- [PKCS #11 v3.0 Base, section 4.10 and C_WrapKey](https://docs.oasis-open.org/pkcs11/pkcs11-base/v3.0/os/pkcs11-base-v3.0-os.html):
-  sensitive and extractable attributes have different meanings; the wrapper needs
-  wrapping permission and the target must be extractable. Attribute modifiability
-  is also subject to token policy. This exhibit chooses one permissive policy and
-  one restrictive policy; it does not assess any particular vendor or device.
+- [OASIS PKCS #11 Specification v3.2](https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/pkcs11-spec-v3.2.html):
+  AES Key Wrap supports encrypt/decrypt and wrap/unwrap; sensitive and extractable
+  attributes have different meanings; wrapping requires an appropriate wrapping
+  key and extractable target. Attribute changes remain subject to token policy.
+  This exhibit chooses one permissive policy and one restrictive policy; it does
+  not assess any particular vendor or device.
 - Encyclopedia entry **Formal Analysis of Cryptographic APIs**, original PDF
   positions 2438–2440; split Part 2 positions 590–592. This motivates the
   stateful-composition lesson, not a claim that every described attack is implemented.

@@ -1,4 +1,5 @@
 import { compromisePanel } from './ui/compromise';
+import { keyHandleSearchPanel } from './ui/key-handle-search';
 import { keyHandlesPanel } from './ui/key-handles';
 import { aeadOpen, aeadSeal } from './crypto/aead';
 import { decoder, encoder, zeroize } from './crypto/bytes';
@@ -474,6 +475,7 @@ function appMarkup(): string {
       <summary id="deeper-summary">Open the security lab &amp; wire internals</summary>
       <div class="deeper-body">
         <div id="key-handles-mount"></div>
+        <div id="key-handle-search-mount"></div>
         ${renderSecurityLab(state.securityResults)}
         ${explainers()}
         ${renderRequestFlow(state.flow)}
@@ -802,6 +804,7 @@ function bind(root: HTMLElement): void {
   root.querySelector('#reset-btn')?.addEventListener('click', () => {
     compromiseView = undefined;
     keyHandlesView = undefined;
+    keyHandleSearchView = undefined;
     state.keyId = null;
     state.envelopes = [];
     state.timeline = ['Ready'];
@@ -938,6 +941,7 @@ function focusSelector(el: Element | null): string | null {
 
 let compromiseView: HTMLElement | undefined;
 let keyHandlesView: HTMLElement | undefined;
+let keyHandleSearchView: HTMLElement | undefined;
 
 export function render(root: HTMLElement): void {
   const selector = focusSelector(document.activeElement);
@@ -947,6 +951,8 @@ export function render(root: HTMLElement): void {
   root.querySelector('#compromise-mount')?.replaceWith(compromiseView);
   keyHandlesView ??= keyHandlesPanel();
   root.querySelector('#key-handles-mount')?.replaceWith(keyHandlesView);
+  keyHandleSearchView ??= keyHandleSearchPanel();
+  root.querySelector('#key-handle-search-mount')?.replaceWith(keyHandleSearchView);
   if (selector) {
     const next = root.querySelector<HTMLElement>(selector);
     // Preserve focus across the re-render; the element may be gone (e.g. after

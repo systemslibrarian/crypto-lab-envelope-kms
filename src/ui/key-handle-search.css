@@ -1,0 +1,185 @@
+.key-state-search {
+  margin-top: 1.5rem;
+  min-width: 0;
+}
+
+.key-state-search .state-search-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.key-state-search .state-search-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-hi);
+}
+
+.key-state-search .state-search-controls select {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  background: var(--panel-strong);
+}
+
+.key-state-search .controls-row {
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.key-state-search .chip {
+  min-height: 44px;
+  white-space: normal;
+  text-align: left;
+}
+
+.key-state-search .state-search-warning {
+  color: var(--amber);
+  padding-left: 0.8rem;
+  border-left: 3px solid var(--amber);
+}
+
+.key-state-search .state-search-model {
+  padding: 1rem;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  background: var(--panel-strong);
+}
+
+.key-state-search h3,
+.key-state-search h4 {
+  color: var(--text-hi);
+}
+
+.key-state-search h4 {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.key-state-search .state-search-bounds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.key-state-search .state-search-bounds > div,
+.key-state-search .state-search-wire > div {
+  min-width: 0;
+  padding: 0.65rem;
+  border-left: 2px solid var(--control-border);
+}
+
+.key-state-search .state-search-bounds dt,
+.key-state-search .state-search-wire dt {
+  color: var(--text-dim);
+}
+
+.key-state-search .state-search-bounds dd,
+.key-state-search .state-search-wire dd {
+  margin-top: 0.25rem;
+  color: var(--text-hi);
+}
+
+.key-state-search #state-search-knowledge,
+.key-state-search #state-search-rules {
+  margin: 0.6rem 0 0 1.2rem;
+}
+
+.key-state-search #state-search-knowledge li,
+.key-state-search #state-search-rules li {
+  margin: 0.45rem 0;
+}
+
+.key-state-search .state-search-outcome {
+  padding: 1rem;
+  border: 1px solid var(--control-border);
+  border-left-width: 4px;
+  border-radius: 4px;
+  background: var(--panel-strong);
+}
+
+.key-state-search .state-search-outcome[data-outcome='protected'] {
+  border-left-color: var(--teal);
+}
+
+.key-state-search .state-search-outcome[data-outcome='exposed'],
+.key-state-search .state-search-outcome[data-outcome='incomplete'],
+.key-state-search .state-search-outcome[data-outcome='error'] {
+  border-color: var(--crimson);
+}
+
+.key-state-search .state-search-outcome[data-outcome='exposed'] #state-search-status,
+.key-state-search .state-search-outcome[data-outcome='incomplete'] #state-search-status,
+.key-state-search .state-search-outcome[data-outcome='error'] #state-search-status {
+  color: var(--crimson);
+  font-weight: 600;
+}
+
+.key-state-search .state-search-witness {
+  margin: 1rem 0;
+}
+
+.key-state-search .state-search-witness li {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.7rem;
+  margin: 0.6rem 0;
+  padding: 0.75rem;
+  border-left: 2px solid var(--control-border);
+  background: var(--panel-strong);
+}
+
+.key-state-search .state-search-step {
+  color: var(--text-dim);
+}
+
+.key-state-search .state-search-wire {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.key-state-search code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.key-state-search .state-search-invariant,
+.key-state-search .state-search-limit {
+  padding: 0.8rem;
+  border-left: 3px solid var(--amber);
+  background: var(--panel-strong);
+  margin-top: 1rem;
+}
+
+.key-state-search #state-search-scope,
+.key-state-search .state-search-sources {
+  margin-top: 0.8rem;
+}
+
+.key-state-search a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.key-state-search :is(button, select, a):focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 4px;
+}
+
+@media (max-width: 639px) {
+  .key-state-search .state-search-controls,
+  .key-state-search .state-search-bounds,
+  .key-state-search .state-search-wire {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .key-state-search .state-search-witness li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
