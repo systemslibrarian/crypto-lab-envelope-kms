@@ -6,9 +6,7 @@ async function screenshotExpandedViewport(page: Page, path: string): Promise<voi
   await page.screenshot({ path });
 }
 
-test('key-evolving audit states are accessible and reflow at narrow width', async ({
-  page,
-}, testInfo) => {
+test('key-evolving audit attack states are accessible at narrow width', async ({ page }) => {
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 380, height: 800 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -65,6 +63,23 @@ test('key-evolving audit states are accessible and reflow at narrow width', asyn
   await expect(page.locator('#kea-rewrite-prior')).toBeDisabled();
   await page.locator('#kea-freshness-input').selectOption('trusted-heartbeat');
   await scan(page, 'key-evolving audit: changed trust inputs retire old evidence');
+
+  expect(errors, errors.join('\n')).toEqual([]);
+  reportCollected();
+});
+
+test('key-evolving audit trusted evidence, themes, reset, and reflow are accessible', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(240_000);
+  await page.setViewportSize({ width: 380, height: 800 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const errors = watchPageErrors(page);
+  await page.goto('.');
+  await expect(page.locator('#key-evolving-audit-heading')).toBeVisible();
+  await expect(page.locator('#key-evolving-audit-lab')).toHaveAttribute('data-state', 'ready');
+  await page.locator('#kea-completeness-input').selectOption('trusted-close');
+  await page.locator('#kea-freshness-input').selectOption('trusted-heartbeat');
 
   await page.locator('#kea-build').click();
   await page.locator('#kea-truncate').click();
