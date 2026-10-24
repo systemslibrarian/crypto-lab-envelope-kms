@@ -1,4 +1,5 @@
 import { compromisePanel } from './ui/compromise';
+import { disposeKeyEvolvingAuditPanel, keyEvolvingAuditPanel } from './ui/key-evolving-audit';
 import { keyHandleSearchPanel } from './ui/key-handle-search';
 import { keyHandlesPanel } from './ui/key-handles';
 import { aeadOpen, aeadSeal } from './crypto/aead';
@@ -249,7 +250,7 @@ function explainers(): string {
     <h2>Why Envelope Encryption</h2>
     <p>HSM-backed KMS systems are powerful but cannot process raw application payload volume directly. Envelope encryption keeps heavy data movement local and asks KMS to protect short-lived DEKs instead.</p>
     <p>The DEK/KEK/root-KEK split keeps blast radius bounded: DEKs protect data, KEKs protect DEKs, and a top-tier root protects KEKs. Rotation at higher tiers avoids bulk data re-encryption.</p>
-    <p>The audit trail is hash-chained with SHA-256. If any historical entry is edited, chain verification fails at the first broken index.</p>
+    <p>The basic audit trail is hash-chained with SHA-256. It catches an edit while the stored hashes remain unchanged; a writer that can replace the whole chain can recompute or truncate it. The compromise exercise below adds keyed evidence and states its remaining limits.</p>
   </section>`;
 }
 
@@ -485,6 +486,7 @@ function appMarkup(): string {
 
   ${renderRotationPanel(state.timeline)}
   ${renderAuditView(auditEntries, auditState)}
+  <div id="key-evolving-audit-mount"></div>
   <div id="compromise-mount"></div>
   ${comparisonPanel()}`;
 }
@@ -803,6 +805,8 @@ function bind(root: HTMLElement): void {
   });
   root.querySelector('#reset-btn')?.addEventListener('click', () => {
     compromiseView = undefined;
+    disposeKeyEvolvingAuditPanel(keyEvolvingAuditView);
+    keyEvolvingAuditView = undefined;
     keyHandlesView = undefined;
     keyHandleSearchView = undefined;
     state.keyId = null;
@@ -940,6 +944,7 @@ function focusSelector(el: Element | null): string | null {
 }
 
 let compromiseView: HTMLElement | undefined;
+let keyEvolvingAuditView: HTMLElement | undefined;
 let keyHandlesView: HTMLElement | undefined;
 let keyHandleSearchView: HTMLElement | undefined;
 
@@ -949,6 +954,8 @@ export function render(root: HTMLElement): void {
   bind(root);
   compromiseView ??= compromisePanel();
   root.querySelector('#compromise-mount')?.replaceWith(compromiseView);
+  keyEvolvingAuditView ??= keyEvolvingAuditPanel();
+  root.querySelector('#key-evolving-audit-mount')?.replaceWith(keyEvolvingAuditView);
   keyHandlesView ??= keyHandlesPanel();
   root.querySelector('#key-handles-mount')?.replaceWith(keyHandlesView);
   keyHandleSearchView ??= keyHandleSearchPanel();

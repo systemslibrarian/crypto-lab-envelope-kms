@@ -18,7 +18,8 @@ name: Deploy to GitHub Pages
 # is deleted rather than kept beside it -- a second copy of a gate is how the two
 # drifted apart in the first place -- and its four steps that were not already
 # covered here (format:check, test:coverage, the coverage artifact, npm audit)
-# moved across verbatim, flags included, before it was removed.
+# moved across before it was removed. The format check is now blocking so every
+# reported-success gate has actually passed every listed check.
 on:
   push:
     branches: [main]
@@ -56,13 +57,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Migrated from ci.yml, verbatim. It was non-blocking there and stays
-      # non-blocking here: carrying the flag across is preservation, and dropping
-      # it would be a scope change that could redden main over formatting drift
-      # this sweep never looked at.
+      # Formatting is part of the deploy contract. Keep this blocking so a
+      # failed check cannot be reported as a successful integration gate.
       - name: Format check
         run: npm run format:check
-        continue-on-error: true
 
       # typecheck && lint && test && build, which is the same script CI runs.
       # Deploy previously ran only test:a11y, so none of the vitest suite —
@@ -115,14 +113,14 @@ jobs:
       - name: Accessibility gate (axe-core, WCAG A/AA)
         run: npm run test:a11y
 
-      - name: Key-handle claim mutation gate
-        run: npm run test:key-handles:mutations
+      - name: Key-handle and audit-log claim mutation gate
+        run: npm run test:claims:mutations
 
-      - name: Upload key-handle mutation evidence
+      - name: Upload claim mutation evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: key-handle-mutations
+          name: claim-mutations
           path: test-results/key-handle-mutations/
           if-no-files-found: error
           retention-days: 14

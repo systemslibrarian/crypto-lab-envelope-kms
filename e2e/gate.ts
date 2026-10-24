@@ -321,9 +321,10 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   await expect(page.locator('.flow-btn.active')).toHaveAttribute('data-flow', FLOWS[0]);
   await expect(page.locator('.flow-btn.active')).toHaveAttribute('aria-pressed', 'true');
 
-  // The security lab and wire internals stay closed on arrival. The new
-  // key-handle model adds one nested disclosure, also closed and hidden.
-  await expect(page.locator('details')).toHaveCount(3);
+  // The security lab and wire internals stay closed on arrival. The key-handle
+  // model adds one nested disclosure; the key-evolving audit lesson adds its
+  // construction and wire-evidence disclosures. All five arrive closed.
+  await expect(page.locator('details')).toHaveCount(5);
   await expect(page.locator('.handle-model-details')).toHaveCount(1);
   await expect(page.locator('.handle-model-details')).toBeHidden();
   await expect(page.locator('details[open]')).toHaveCount(0);
