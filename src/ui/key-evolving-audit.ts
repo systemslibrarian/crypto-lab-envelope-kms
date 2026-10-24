@@ -302,12 +302,13 @@ function attackTrackMarkup(
   scheme: AuthenticatedLogScheme,
   track: AttackTrack,
   verdict: 'accepted' | 'rejected' | 'valid-prefix',
+  attackLabel: string,
 ): string {
   const retag =
     track.attackerCanRetag === undefined
       ? ''
       : `<p>Compromised state can retag this target: <strong>${track.attackerCanRetag ? 'yes' : 'no'}</strong>.</p>`;
-  return `<section class="kea-attack-track" data-scheme="${scheme}" data-verdict="${verdict}" aria-label="${schemeLabel(scheme)} attack result">
+  return `<section class="kea-attack-track" data-scheme="${scheme}" data-verdict="${verdict}" aria-label="${schemeLabel(scheme)} ${attackLabel} result">
     <h4>${schemeLabel(scheme)}</h4>
     <p><strong>${verdict === 'rejected' ? 'Rejected' : verdict === 'valid-prefix' ? 'Valid prefix' : 'Accepted'}:</strong> ${integritySentence(track.integrity)}</p>
     ${retag}
@@ -331,8 +332,8 @@ function attackEvidence(
       <h3 id="kea-prior-heading">Rewrite before compromise</h3>
       <p>The attacker changed period ${experiment.beforePeriod - 1} using only the state exposed immediately before period ${experiment.beforePeriod}.</p>
       <div class="kea-attack-grid">
-        ${attackTrackMarkup('STATIC', prior.STATIC, prior.STATIC.integrity.integrity === 'VALID' ? 'accepted' : 'rejected')}
-        ${attackTrackMarkup('FORWARD_SECURE', prior.FORWARD_SECURE, prior.FORWARD_SECURE.integrity.integrity === 'VALID' ? 'accepted' : 'rejected')}
+        ${attackTrackMarkup('STATIC', prior.STATIC, prior.STATIC.integrity.integrity === 'VALID' ? 'accepted' : 'rejected', 'pre-compromise rewrite')}
+        ${attackTrackMarkup('FORWARD_SECURE', prior.FORWARD_SECURE, prior.FORWARD_SECURE.integrity.integrity === 'VALID' ? 'accepted' : 'rejected', 'pre-compromise rewrite')}
       </div>
     </article>`);
   }
@@ -341,15 +342,15 @@ function attackEvidence(
       <h3 id="kea-suffix-heading">Forge from the compromise boundary</h3>
       <p>The first altered record is period ${experiment.beforePeriod}. The prefix through period ${experiment.beforePeriod - 1} is copied byte for byte.</p>
       <div class="kea-attack-grid">
-        ${attackTrackMarkup('STATIC', suffix.STATIC, suffix.STATIC.integrity.integrity === 'VALID' ? 'accepted' : 'rejected')}
-        ${attackTrackMarkup('FORWARD_SECURE', suffix.FORWARD_SECURE, suffix.FORWARD_SECURE.integrity.integrity === 'VALID' ? 'accepted' : 'rejected')}
+        ${attackTrackMarkup('STATIC', suffix.STATIC, suffix.STATIC.integrity.integrity === 'VALID' ? 'accepted' : 'rejected', 'compromised-suffix forgery')}
+        ${attackTrackMarkup('FORWARD_SECURE', suffix.FORWARD_SECURE, suffix.FORWARD_SECURE.integrity.integrity === 'VALID' ? 'accepted' : 'rejected', 'compromised-suffix forgery')}
       </div>
     </article>`);
   }
   if (truncation) {
     const track = (scheme: AuthenticatedLogScheme): string => {
       const result = truncation[scheme];
-      return `${attackTrackMarkup(scheme, result, result.integrity.integrity === 'VALID' ? 'valid-prefix' : 'rejected')}
+      return `${attackTrackMarkup(scheme, result, result.integrity.integrity === 'VALID' ? 'valid-prefix' : 'rejected', 'truncated-prefix')}
         <dl class="kea-dimension-report">
           <div><dt>Completeness check</dt><dd>${result.completeness.completeness}</dd></div>
           <div><dt>Freshness check</dt><dd>${result.freshness.freshness}</dd></div>

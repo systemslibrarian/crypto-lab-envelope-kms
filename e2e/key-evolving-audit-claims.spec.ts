@@ -437,6 +437,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
     await page.locator('#kea-rewrite-prior').click();
     await page.locator('#kea-forge-suffix').click();
     await page.locator('#kea-truncate').click();
+    const attackLabels = await page
+      .locator('.kea-attack-track')
+      .evaluateAll((tracks) => tracks.map((track) => track.getAttribute('aria-label')));
+    expect(new Set(attackLabels).size).toBe(attackLabels.length);
     await expect(page.locator('[data-property="forward-integrity"]')).toHaveAttribute(
       'data-verdict',
       'split-boundary',
