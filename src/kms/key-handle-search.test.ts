@@ -37,6 +37,7 @@ describe('bounded key-handle state search', () => {
     expect(result.capHit).toBe(false);
     expect(result.witness).toHaveLength(depth);
     expect(result.witness?.map((action) => action.kind)).toEqual(kinds);
+    expect(result.terminalEvidence?.attackerKnownValues).toContain('protected-target');
     expect(exploreKeyHandleStates(scenario, 'per-handle-templates')).toEqual(result);
   });
 
@@ -51,6 +52,7 @@ describe('bounded key-handle state search', () => {
       expect(result.verdict).toBe('no-witness-within-bounds');
       expect(result.capHit).toBe(false);
       expect(result.witness).toBeNull();
+      expect(result.terminalEvidence).toBeNull();
       expect(result.deepestCompleted).toBe(deepestExpanded);
       expect(result.statesVisited).toBeGreaterThan(0);
       expect(result.invariant).toBe('protected-target not in attacker-known raw values');
@@ -154,6 +156,10 @@ describe('bounded key-handle state search', () => {
       throw new Error('Expected two unwrap actions.');
     }
     expect(unwraps[0].outputHandle).not.toBe(unwraps[1].outputHandle);
+    expect(result.terminalEvidence?.opaquePivotHandles).toEqual([
+      { id: unwraps[0].outputHandle, capabilities: ['KW_WRAP_KEY'] },
+      { id: unwraps[1].outputHandle, capabilities: ['KW_DECRYPT_BYTES'] },
+    ]);
 
     const proof = await replayKeyHandleWitness(result, fixtureFactory);
     expect(proof.sameValueHandles).toEqual([unwraps[0].outputHandle, unwraps[1].outputHandle]);
@@ -218,6 +224,18 @@ describe('bounded key-handle state search', () => {
     } as SearchResult;
     await expect(replayKeyHandleWitness(overBound, fixtureFactory)).rejects.toThrow(
       'exceeds its declared',
+    );
+
+    const sameValue = exploreKeyHandleStates('same-value-handles', 'per-handle-templates');
+    const collapsedAlias = {
+      ...sameValue,
+      terminalEvidence: {
+        ...sameValue.terminalEvidence!,
+        opaquePivotHandles: sameValue.terminalEvidence!.opaquePivotHandles.slice(0, 1),
+      },
+    } as SearchResult;
+    await expect(replayKeyHandleWitness(collapsedAlias, fixtureFactory)).rejects.toThrow(
+      'terminal evidence does not match',
     );
   });
 

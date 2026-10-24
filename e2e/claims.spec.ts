@@ -1104,6 +1104,14 @@ test.describe('Bounded key-handle state-search claims', () => {
     expect(trace.filter((line) => line.includes('UnwrapAs'))).toHaveLength(2);
     expect(trace.some((line) => line.includes('kw-wrap-only'))).toBe(true);
     expect(trace.some((line) => line.includes('kw-decrypt-only'))).toBe(true);
+    await expect(
+      page.locator('#state-search-symbolic-alias-proof'),
+      'KHS-03 symbolic terminal state must retain two equal-value handle objects',
+    ).toContainText('retained 2 distinct opaque-pivot handles');
+    await expect(page.locator('#state-search-symbolic-alias-proof')).toContainText('KW_WRAP_KEY');
+    await expect(page.locator('#state-search-symbolic-alias-proof')).toContainText(
+      'KW_DECRYPT_BYTES',
+    );
     await expect(page.locator('#state-search-alias-proof')).toContainText('Distinct handles');
     await expect(page.locator('#state-search-alias-proof')).toContainText(
       'contained equal key bytes',

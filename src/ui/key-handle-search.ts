@@ -67,6 +67,21 @@ function proofMarkup(proof: SearchProof): string {
   </div>`;
 }
 
+function terminalEvidenceMarkup(result: SearchResult): string {
+  const terminal = result.terminalEvidence;
+  if (!terminal) return '';
+  const knowledge = terminal.attackerKnownValues.map((value) => `<code>${escape(value)}</code>`);
+  const aliasEvidence = terminal.opaquePivotHandles
+    .map(
+      (entry) => `<code>${escape(entry.id)}</code> (${entry.capabilities.map(escape).join(', ')})`,
+    )
+    .join(' and ');
+  return `<div class="state-search-terminal-evidence">
+    <p id="state-search-terminal-knowledge"><strong>Symbolic terminal state:</strong> attacker-known raw values include ${knowledge.join(', ')}.</p>
+    ${result.scenario === 'same-value-handles' ? `<p id="state-search-symbolic-alias-proof">The terminal state retained ${terminal.opaquePivotHandles.length} distinct <code>opaque-pivot</code> handles: ${aliasEvidence}.</p>` : ''}
+  </div>`;
+}
+
 function resultMessage(result: SearchResult): string {
   if (result.verdict === 'witness-found') {
     return `DISCLOSURE WITNESS FOUND at depth ${result.witness!.length}: protected-target entered attacker-known raw values.`;
@@ -206,7 +221,7 @@ export function keyHandleSearchPanel(): HTMLElement {
       if (result.verdict === 'witness-found') {
         const proof = await replayKeyHandleWitness(result);
         try {
-          evidenceMarkup = `<p>Retained ${(result.statesVisited - 1).toLocaleString()} non-witness states, then checked the terminal witness (the ${result.statesVisited.toLocaleString()}th distinct state), and accepted ${result.transitionsAccepted.toLocaleString()} transition instances before stopping. Symbolic reachability and concrete cryptographic replay are separate checks.</p>${proofMarkup(proof)}`;
+          evidenceMarkup = `<p>Retained ${(result.statesVisited - 1).toLocaleString()} non-witness states, then checked the terminal witness (the ${result.statesVisited.toLocaleString()}th distinct state), and accepted ${result.transitionsAccepted.toLocaleString()} transition instances before stopping. Symbolic reachability and concrete cryptographic replay are separate checks.</p>${terminalEvidenceMarkup(result)}${proofMarkup(proof)}`;
         } finally {
           clearProof(proof);
         }

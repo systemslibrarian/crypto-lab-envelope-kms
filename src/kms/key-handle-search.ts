@@ -63,6 +63,14 @@ export type SearchBounds = Readonly<{
   templates: 3;
 }>;
 
+export type SearchTerminalEvidence = Readonly<{
+  attackerKnownValues: readonly string[];
+  opaquePivotHandles: readonly Readonly<{
+    id: string;
+    capabilities: readonly SearchCapability[];
+  }>[];
+}>;
+
 export type SearchResult = Readonly<{
   scenario: SearchScenario;
   policy: SearchPolicy;
@@ -75,6 +83,7 @@ export type SearchResult = Readonly<{
   verdict: 'witness-found' | 'no-witness-within-bounds' | 'search-incomplete';
   capHit: boolean;
   witness: readonly SearchAction[] | null;
+  terminalEvidence: SearchTerminalEvidence | null;
 }>;
 
 export type SearchProof = Readonly<{
@@ -305,6 +314,23 @@ function closeKnowledge(state: SearchState): void {
   }
 }
 
+function terminalEvidence(state: SearchState): SearchTerminalEvidence {
+  return Object.freeze({
+    attackerKnownValues: Object.freeze([...state.knownValues].sort()),
+    opaquePivotHandles: Object.freeze(
+      state.objects
+        .filter((entry) => entry.valueId === 'opaque-pivot')
+        .sort((left, right) => left.id.localeCompare(right.id))
+        .map((entry) =>
+          Object.freeze({
+            id: entry.id,
+            capabilities: Object.freeze([...entry.capabilities]),
+          }),
+        ),
+    ),
+  });
+}
+
 function canonicalState(state: SearchState): string {
   // Handle names are references, not identities. Canonicalize a multiset of
   // object descriptions so alpha-renamed fresh handles share one search state,
@@ -508,6 +534,7 @@ export function exploreKeyHandleStates(
         verdict: 'witness-found',
         capHit: false,
         witness: Object.freeze([...current.path]),
+        terminalEvidence: terminalEvidence(current.state),
       });
     }
     if (current.path.length >= bounds.maxSuccessfulCalls) {
@@ -533,6 +560,7 @@ export function exploreKeyHandleStates(
         verdict: 'witness-found',
         capHit: false,
         witness: Object.freeze(witness),
+        terminalEvidence: terminalEvidence(outgoing[witnessIndex].state),
       });
     }
     transitionsAccepted += outgoing.length;
@@ -552,6 +580,7 @@ export function exploreKeyHandleStates(
           verdict: 'search-incomplete',
           capHit: true,
           witness: null,
+          terminalEvidence: null,
         });
       }
       visited.add(canonical);
@@ -572,6 +601,7 @@ export function exploreKeyHandleStates(
     verdict: 'no-witness-within-bounds',
     capHit: false,
     witness: null,
+    terminalEvidence: null,
   });
 }
 
@@ -624,7 +654,10 @@ function checkedMaterials(
   return result;
 }
 
-function verifyWitness(result: SearchResult): readonly SearchAction[] {
+function verifyWitness(result: SearchResult): Readonly<{
+  witness: readonly SearchAction[];
+  terminalEvidence: SearchTerminalEvidence;
+}> {
   if (
     result.policy !== 'per-handle-templates' ||
     result.verdict !== 'witness-found' ||
@@ -647,7 +680,14 @@ function verifyWitness(result: SearchResult): readonly SearchAction[] {
   if (!state.knownValues.includes(TARGET)) {
     throw new TypeError('The supplied witness does not violate the displayed invariant.');
   }
-  return result.witness;
+  const verifiedTerminalEvidence = terminalEvidence(state);
+  if (JSON.stringify(result.terminalEvidence) !== JSON.stringify(verifiedTerminalEvidence)) {
+    throw new TypeError('The supplied terminal evidence does not match the witness state.');
+  }
+  return Object.freeze({
+    witness: result.witness,
+    terminalEvidence: verifiedTerminalEvidence,
+  });
 }
 
 /** Replay the search-produced witness with real RFC 3394 and AES-256-GCM. */
@@ -655,7 +695,8 @@ export async function replayKeyHandleWitness(
   result: SearchResult,
   factory: SearchKeyFactory = randomKey,
 ): Promise<SearchProof> {
-  const witness = verifyWitness(result);
+  const verified = verifyWitness(result);
+  const witness = verified.witness;
   const materials = checkedMaterials(result.scenario, factory);
   const handles = new Map<string, Uint8Array>();
   const blobs = new Map<string, Uint8Array>();
@@ -746,16 +787,18 @@ export async function replayKeyHandleWitness(
       throw new Error('Recovered target opened a different AES-GCM challenge.');
     }
 
-    const sameValueHandles =
-      result.scenario === 'same-value-handles'
-        ? (witness
-            .filter(
-              (action): action is Extract<SearchAction, { kind: 'UnwrapAs' }> =>
-                action.kind === 'UnwrapAs',
-            )
-            .slice(0, 2)
-            .map((action) => action.outputHandle) as [string, string])
-        : null;
+    let sameValueHandles: [string, string] | null = null;
+    if (result.scenario === 'same-value-handles') {
+      const aliases = verified.terminalEvidence.opaquePivotHandles;
+      const wrapping = aliases.filter((entry) => entry.capabilities.includes('KW_WRAP_KEY'));
+      const decrypting = aliases.filter((entry) => entry.capabilities.includes('KW_DECRYPT_BYTES'));
+      if (aliases.length !== 2 || wrapping.length !== 1 || decrypting.length !== 1) {
+        throw new TypeError(
+          'Same-value replay requires two retained symbolic handles with complementary roles.',
+        );
+      }
+      sameValueHandles = [wrapping[0].id, decrypting[0].id];
+    }
 
     return Object.freeze({
       scenario: result.scenario,
