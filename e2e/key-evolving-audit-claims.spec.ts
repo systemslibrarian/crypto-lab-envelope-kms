@@ -198,13 +198,14 @@ test.describe('S02 key-evolving audit-log claims', () => {
       expect(records).toHaveLength(6);
       expect(new Set(records.map((record) => record.logId))).toEqual(new Set([logId]));
       const verifierState = await initialState(page, scheme);
-      expect(independentMismatches(records, verifierState, scheme)).toEqual({
-        links: [],
-        tags: [],
-      });
-      expect(await compromisedState(page, scheme)).toEqual(
-        stateAt(verifierState, scheme, logId, compromisePeriod),
-      );
+      expect(
+        independentMismatches(records, verifierState, scheme),
+        `KEA-01 ${scheme} displayed tags must match the independently framed HMAC inputs`,
+      ).toEqual({ links: [], tags: [] });
+      expect(
+        await compromisedState(page, scheme),
+        `KEA-01 ${scheme} displayed compromise state must match independent evolution`,
+      ).toEqual(stateAt(verifierState, scheme, logId, compromisePeriod));
     }
 
     const construction = page.locator('#kea-construction-details');
@@ -227,6 +228,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
     );
     await expect(staticResult).toHaveAttribute('data-verdict', 'accepted');
     await expect(forwardResult).toHaveAttribute('data-verdict', 'rejected');
+    await expect(
+      forwardResult,
+      'KEA-02 the verifier must reject the changed pre-compromise record at its tag check',
+    ).toContainText(`record index ${target}: TAG_MISMATCH`);
 
     const staticRecords = await attackedRecords(page, 'prior-rewrite', 'STATIC');
     const forwardRecords = await attackedRecords(page, 'prior-rewrite', 'FORWARD_SECURE');
@@ -259,7 +264,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
       const result = page.locator(`[data-attack="suffix-forgery"] [data-scheme="${scheme}"]`);
       await expect(result).toHaveAttribute('data-verdict', 'accepted');
       const records = await attackedRecords(page, 'suffix-forgery', scheme);
-      expect(records[compromisePeriod].message).toMatch(/^FORGED:/);
+      expect(
+        records[compromisePeriod].message,
+        `KEA-03 ${scheme} compromised suffix must contain the displayed replacement bytes`,
+      ).toMatch(/^FORGED:/);
       expect(records.slice(0, compromisePeriod)).toEqual(
         originals[scheme].slice(0, compromisePeriod),
       );
@@ -287,9 +295,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
       ).trim(),
     };
     for (const scheme of ['STATIC', 'FORWARD_SECURE'] as const) {
-      expect(checkpoints[scheme]).toBe(
-        (await originalRecords(page, scheme))[compromisePeriod - 1].tag,
-      );
+      expect(
+        checkpoints[scheme],
+        `KEA-04 ${scheme} checkpoint must bind the exact count-selected prefix tag`,
+      ).toBe((await originalRecords(page, scheme))[compromisePeriod - 1].tag);
     }
 
     await page.locator('#kea-rewrite-prior').click();
@@ -328,10 +337,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
         tags: [],
       });
     }
-    await expect(page.locator('[data-property="completeness"]')).toHaveAttribute(
-      'data-verdict',
-      'unknown',
-    );
+    await expect(
+      page.locator('[data-property="completeness"]'),
+      'KEA-05 an authenticated prefix without an external close expectation remains incomplete evidence',
+    ).toHaveAttribute('data-verdict', 'unknown');
     await expect(page.locator('[data-property="checkpoint-consistency"]')).toHaveAttribute(
       'data-verdict',
       'match',
@@ -356,10 +365,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
   }) => {
     await build(page);
     await page.locator('#kea-truncate').click();
-    await expect(page.locator('[data-property="freshness"]')).toHaveAttribute(
-      'data-verdict',
-      'unknown',
-    );
+    await expect(
+      page.locator('[data-property="freshness"]'),
+      'KEA-06 authenticated logger-supplied bytes alone do not prove freshness',
+    ).toHaveAttribute('data-verdict', 'unknown');
 
     await page.locator('#kea-freshness-input').selectOption('trusted-heartbeat');
     await page.locator('#kea-build').click();
@@ -386,7 +395,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
 
     await page.locator('#kea-compromise-period').selectOption('4');
     await expect(page.locator('#kea-compromise-period')).toBeFocused();
-    await expect(page.locator('#key-evolving-audit-lab')).toHaveAttribute('data-state', 'ready');
+    await expect(
+      page.locator('#key-evolving-audit-lab'),
+      'KEA-07 changing the compromise boundary must retire evidence from the prior model',
+    ).toHaveAttribute('data-state', 'ready');
     await expect(page.locator('#key-evolving-audit-lab')).toHaveAttribute('data-retired', 'true');
     await expect(page.locator('#kea-status')).toContainText('Previous results retired');
     await expect(page.locator('#kea-attack-evidence')).toBeEmpty();
@@ -459,9 +471,10 @@ test.describe('S02 key-evolving audit-log claims', () => {
     );
     await expect(page.locator('#kea-limits')).toBeVisible();
     await expect(page.locator('#kea-limits > li')).toHaveCount(5);
-    await expect(page.locator('#kea-limits')).toContainText(
-      'Key evolution alone does not establish completeness or freshness',
-    );
+    await expect(
+      page.locator('#kea-limits'),
+      'KEA-08 the visible limits must keep completeness and freshness separate from key evolution',
+    ).toContainText('Key evolution alone does not establish completeness or freshness');
     await expect(page.locator('#key-evolving-audit-lab')).not.toContainText(
       /overall(?:ly)? secure|the log is secure/i,
     );
