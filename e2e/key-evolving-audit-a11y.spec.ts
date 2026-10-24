@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { reportCollected, scan, watchPageErrors } from './gate';
 
 async function screenshotExpandedViewport(page: Page, path: string): Promise<void> {
-  await page.locator('#kea-wire-details').scrollIntoViewIfNeeded();
+  await page.locator('#kea-wire-details > summary').scrollIntoViewIfNeeded();
   await page.screenshot({ path });
 }
 
