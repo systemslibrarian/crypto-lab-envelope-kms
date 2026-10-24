@@ -1,8 +1,13 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { reportCollected, scan, watchPageErrors } from './gate';
+
+async function screenshotResultCards(page: Page, path: string): Promise<void> {
+  await page.locator('#kea-property-results').screenshot({ path, animations: 'disabled' });
+}
 
 test('key-evolving audit attack states are accessible at narrow width', async ({ page }) => {
   test.setTimeout(240_000);
+  page.setDefaultTimeout(20_000);
   await page.setViewportSize({ width: 380, height: 800 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const errors = watchPageErrors(page);
@@ -63,10 +68,11 @@ test('key-evolving audit attack states are accessible at narrow width', async ({
   reportCollected();
 });
 
-test('key-evolving audit trusted evidence, themes, reset, and reflow are accessible', async ({
+test('key-evolving audit trusted evidence, pinned theme, reset, and reflow are accessible', async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(240_000);
+  page.setDefaultTimeout(20_000);
   await page.setViewportSize({ width: 380, height: 800 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const errors = watchPageErrors(page);
@@ -102,12 +108,12 @@ test('key-evolving audit trusted evidence, themes, reset, and reflow are accessi
     narrowBounds.scroll,
     'key-evolving audit evidence must reflow without viewport clipping',
   ).toBeLessThanOrEqual(narrowBounds.width + 1);
+  await screenshotResultCards(page, testInfo.outputPath('key-evolving-audit-mobile.png'));
+
   await page.setViewportSize({ width: 1280, height: 900 });
   await scan(page, 'key-evolving audit: expanded evidence on desktop');
-
-  await page.locator('#themeToggle').click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await scan(page, 'key-evolving audit: expanded evidence in light theme');
+  await screenshotResultCards(page, testInfo.outputPath('key-evolving-audit-desktop.png'));
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
   await page.locator('#kea-reset').focus();
   await page.keyboard.press('Enter');
