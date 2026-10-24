@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Reproduce the four key-handle browser mutation checks from master §4.1c.
+ * Reproduce the key-handle browser mutation checks from master §4.1c and the
+ * bounded state-search extension.
  *
  * Run only after committing the real source, tests and this runner:
  *   node scripts/key-handle-mutations.mjs
@@ -57,6 +58,53 @@ const MUTATIONS = [
     anchor:
       "'Valid cryptographic checks do not prevent key disclosure when this API permits conflicting operations.'",
     replacement: "''",
+  },
+  {
+    id: 'KHS-01',
+    finding: 'The fixed unwrap policy must reject privileged caller templates.',
+    file: 'src/kms/key-handle-search.ts',
+    anchor: "if (policy === 'fixed-template' && template !== 'data-only') continue;",
+    replacement: 'if (false) continue;',
+  },
+  {
+    id: 'KHS-02',
+    finding: 'Displayed escaped bytes must open the displayed state-search challenge.',
+    file: 'src/ui/key-handle-search.ts',
+    anchor: 'const escaped = bytesToHex(proof.escapedKey);',
+    replacement: "const escaped = '00'.repeat(proof.escapedKey.length);",
+  },
+  {
+    id: 'KHS-03',
+    finding: 'Distinct handles containing equal values must not collapse into one object.',
+    file: 'src/kms/key-handle-search.ts',
+    anchor:
+      'candidate.objects.push(\n            object(outputHandle, wrapped.payloadValue, templateCapabilities[template], false),\n          );',
+    replacement:
+      'candidate.objects = candidate.objects.filter(\n            (entry) => entry.valueId !== wrapped.payloadValue,\n          );\n          candidate.objects.push(\n            object(outputHandle, wrapped.payloadValue, templateCapabilities[template], false),\n          );',
+  },
+  {
+    id: 'KHS-04',
+    finding: 'The state-search result must retain its visible bounded-model limitation.',
+    file: 'src/ui/key-handle-search.ts',
+    anchor:
+      'This is a bounded browser model inspired by historical cryptographic-API analyses. It is not a PKCS #11 implementation, HSM assessment, vendor vulnerability claim, exhaustive search, or security proof. The fixed roles and fixed unwrap template block the modeled traces; they do not establish security for unmodeled operations, mechanisms, sessions, authentication, concurrency, runtime compromise, or side channels.',
+    replacement: '',
+  },
+  {
+    id: 'KHS-05',
+    finding: 'Changing the search preset must retire evidence from the prior model.',
+    file: 'src/ui/key-handle-search.ts',
+    anchor: 'if (next === scenario) return;',
+    replacement: 'return;',
+  },
+  {
+    id: 'KHS-06',
+    finding: 'A resource cutoff must be reported as incomplete, never as no witness.',
+    file: 'src/ui/key-handle-search.ts',
+    anchor:
+      "if (result.verdict === 'search-incomplete') {\n    return `SEARCH INCOMPLETE: stopped at the ${result.bounds.maxStates.toLocaleString()} retained-non-witness-state cap. No safety conclusion is available.`;",
+    replacement:
+      'if (false) {\n    return `SEARCH INCOMPLETE: stopped at the ${result.bounds.maxStates.toLocaleString()} retained-non-witness-state cap. No safety conclusion is available.`;',
   },
 ];
 
