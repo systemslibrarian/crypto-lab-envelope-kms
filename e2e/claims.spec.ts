@@ -1135,7 +1135,7 @@ test.describe('Bounded key-handle state-search claims', () => {
       page.locator('#state-search-limit'),
       'KHS-04 bounded-search limitation must stay visible',
     ).toContainText('not a PKCS #11 implementation');
-    await expect(page.locator('#state-search-limit')).toContainText('not a security proof');
+    await expect(page.locator('#state-search-limit')).toContainText('or security proof');
     await expect(page.locator('#state-search-scope')).toContainText(
       'distinct objects containing equal key bytes',
     );
@@ -1172,7 +1172,9 @@ test.describe('Bounded key-handle state-search claims', () => {
     await expect(page.locator('#state-search-outcome')).toHaveAttribute('data-outcome', 'exposed');
     await expect(page.locator('#state-search-escaped-key')).toHaveCount(1);
     await page.locator('#reset-btn').click();
-    await expect(page.locator('#state-search-status')).toHaveText('Not run.');
+    await expect(page.locator('#state-search-status')).toHaveText(
+      'Not run. Choose a preset and policy, then start the explorer.',
+    );
     await expect(page.locator('#state-search-outcome')).toHaveAttribute('data-outcome', 'ready');
     await expect(page.locator('#state-search-escaped-key')).toHaveCount(0);
     await expect(page.locator('#state-search-scenario')).toHaveValue('known-key-import');
