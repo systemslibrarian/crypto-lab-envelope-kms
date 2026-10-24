@@ -1,9 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { reportCollected, scan, watchPageErrors } from './gate';
 
-async function screenshotExpandedViewport(page: Page, path: string): Promise<void> {
-  await page.locator('#kea-wire-details > summary').scrollIntoViewIfNeeded();
-  await page.screenshot({ path });
+async function screenshotResultCards(page: Page, path: string): Promise<void> {
+  await page.locator('#kea-property-results').screenshot({ path, animations: 'disabled' });
 }
 
 test('key-evolving audit attack states are accessible at narrow width', async ({ page }) => {
@@ -107,16 +106,16 @@ test('key-evolving audit trusted evidence, themes, reset, and reflow are accessi
     narrowBounds.scroll,
     'key-evolving audit evidence must reflow without viewport clipping',
   ).toBeLessThanOrEqual(narrowBounds.width + 1);
-  await screenshotExpandedViewport(page, testInfo.outputPath('key-evolving-audit-mobile.png'));
+  await screenshotResultCards(page, testInfo.outputPath('key-evolving-audit-mobile.png'));
 
   await page.setViewportSize({ width: 1280, height: 900 });
   await scan(page, 'key-evolving audit: expanded evidence on desktop');
-  await screenshotExpandedViewport(page, testInfo.outputPath('key-evolving-audit-desktop.png'));
+  await screenshotResultCards(page, testInfo.outputPath('key-evolving-audit-desktop.png'));
 
   await page.locator('#themeToggle').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await scan(page, 'key-evolving audit: expanded evidence in light theme');
-  await screenshotExpandedViewport(page, testInfo.outputPath('key-evolving-audit-light.png'));
+  await screenshotResultCards(page, testInfo.outputPath('key-evolving-audit-light.png'));
 
   await page.locator('#kea-reset').focus();
   await page.keyboard.press('Enter');
