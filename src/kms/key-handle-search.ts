@@ -790,11 +790,26 @@ export async function replayKeyHandleWitness(
     let sameValueHandles: [string, string] | null = null;
     if (result.scenario === 'same-value-handles') {
       const aliases = verified.terminalEvidence.opaquePivotHandles;
-      const wrapping = aliases.filter((entry) => entry.capabilities.includes('KW_WRAP_KEY'));
-      const decrypting = aliases.filter((entry) => entry.capabilities.includes('KW_DECRYPT_BYTES'));
-      if (aliases.length !== 2 || wrapping.length !== 1 || decrypting.length !== 1) {
+      const wrapping = aliases.filter(
+        (entry) => entry.capabilities.length === 1 && entry.capabilities[0] === 'KW_WRAP_KEY',
+      );
+      const decrypting = aliases.filter(
+        (entry) => entry.capabilities.length === 1 && entry.capabilities[0] === 'KW_DECRYPT_BYTES',
+      );
+      const wrappingBytes = wrapping.length === 1 ? handles.get(wrapping[0].id) : undefined;
+      const decryptingBytes = decrypting.length === 1 ? handles.get(decrypting[0].id) : undefined;
+      if (
+        aliases.length !== 2 ||
+        wrapping.length !== 1 ||
+        decrypting.length !== 1 ||
+        wrapping[0].id === decrypting[0].id ||
+        !wrappingBytes ||
+        !decryptingBytes ||
+        !equalBytes(wrappingBytes, decryptingBytes) ||
+        !equalBytes(wrappingBytes, materials.get('opaque-pivot')!)
+      ) {
         throw new TypeError(
-          'Same-value replay requires two retained symbolic handles with complementary roles.',
+          'Same-value replay requires two retained, equal-byte handles with exact complementary roles.',
         );
       }
       sameValueHandles = [wrapping[0].id, decrypting[0].id];

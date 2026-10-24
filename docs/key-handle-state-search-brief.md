@@ -164,7 +164,9 @@ The learner chooses a preset and fixed or unsafe policy, then explicitly starts
 the search. Changing either input retires the prior result. The UI always shows
 the invariant, initial knowledge, transition rules, bounds, state cap, and
 limitations. A witness shows the search-derived API sequence plus replay bytes;
-a fixed result shows the exact states and accepted transition instances checked.
+its terminal evidence separately shows attacker-known values and retained
+same-value handle identities and roles. A fixed result shows the exact states
+and accepted transition instances checked.
 
 The result is announced through a live status region, focus returns to the
 initiating button, all controls are keyboard operable, and the layout reflows at
@@ -176,8 +178,9 @@ error have text labels in addition to color.
 Unit tests require deterministic shortest witnesses at depths three, three, and
 four; misses one step below those depths; complete fixed-policy searches; a
 separate incomplete result under a tiny state cap; distinct same-value handles;
-valid fixture ownership; real RFC 3394 replay; and independent WebCrypto GCM
-opening. Browser claims use only rendered bytes to open the displayed challenge.
+terminal-state evidence consistent with the replayed witness; valid fixture
+ownership; real RFC 3394 replay; and independent WebCrypto GCM opening. Browser
+claims use only rendered bytes to open the displayed challenge.
 Accessibility tests exercise the initial, bounded-complete, import-exposure, and
 same-value-exposure states at narrow and desktop widths.
 
