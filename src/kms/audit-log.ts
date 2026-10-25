@@ -118,7 +118,8 @@ export class AuditLog {
    * Like verify(), but also returns WHY the chain broke — whether the entry's own
    * hash no longer matches its content, or its prev_hash no longer matches the
    * previous entry's hash — plus the recomputed hash so the UI can show exactly
-   * which bytes stopped matching. This makes the append-only guarantee visible.
+   * which bytes stopped matching. This makes direct-edit detection visible; an
+   * unkeyed chain alone is not an append-only guarantee against full rewrites.
    */
   verifyDetail(): {
     ok: boolean;

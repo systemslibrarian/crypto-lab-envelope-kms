@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * Reproduce the key-handle browser mutation checks from master §4.1c and the
- * bounded state-search extension.
+ * Reproduce the key-handle and key-evolving audit-log browser mutation checks.
  *
  * Run only after committing the real source, tests and this runner:
  *   node scripts/key-handle-mutations.mjs
@@ -17,7 +16,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SPEC = 'e2e/claims.spec.ts';
+const SPECS = ['e2e/claims.spec.ts', 'e2e/key-evolving-audit-claims.spec.ts'];
 const RUNNER = 'scripts/key-handle-mutations.mjs';
 const RESULT_ROOT = path.join(ROOT, 'test-results/key-handle-mutations');
 const BUILD_TIMEOUT_MS = 180_000;
@@ -105,6 +104,68 @@ const MUTATIONS = [
       "if (result.verdict === 'search-incomplete') {\n    return `SEARCH INCOMPLETE: stopped at the ${result.bounds.maxStates.toLocaleString()} retained-non-witness-state cap. No safety conclusion is available.`;",
     replacement:
       'if (false) {\n    return `SEARCH INCOMPLETE: stopped at the ${result.bounds.maxStates.toLocaleString()} retained-non-witness-state cap. No safety conclusion is available.`;',
+  },
+  {
+    id: 'KEA-01',
+    finding: 'Displayed HMAC tags must independently reproduce the documented framed bytes.',
+    file: 'src/kms/forward-secure-log.ts',
+    anchor: 'return hmac(sha256, key, message);',
+    replacement: 'return hmac(sha256, key, concatBytes(message, new Uint8Array([0])));',
+  },
+  {
+    id: 'KEA-02',
+    finding: 'A changed pre-compromise record must fail its key-evolving tag check.',
+    file: 'src/kms/forward-secure-log.ts',
+    anchor: 'const tagMatches = equalBytes(expected, stored);',
+    replacement: 'const tagMatches = true;',
+  },
+  {
+    id: 'KEA-03',
+    finding: 'The compromised-state demonstration must actually replace the suffix bytes.',
+    file: 'src/ui/key-evolving-audit.ts',
+    anchor:
+      'message:\n        index === 0\n          ? `FORGED: attacker replaced period ${experiment.beforePeriod}`\n          : record.message,',
+    replacement: 'message: record.message,',
+  },
+  {
+    id: 'KEA-04',
+    finding: 'A retained checkpoint must bind the displayed record count and exact prefix tag.',
+    file: 'src/kms/forward-secure-log.ts',
+    anchor: 'lastTag: selected.tag,',
+    replacement: 'lastTag: records[recordCount]?.tag ?? selected.tag,',
+  },
+  {
+    id: 'KEA-05',
+    finding:
+      'A valid prefix without an external CLOSE expectation must remain completeness-unknown.',
+    file: 'src/ui/key-evolving-audit.ts',
+    anchor:
+      "verdict: 'unknown',\n    text: 'The remaining records authenticate, but without an external expected CLOSE the verifier cannot tell whether this valid prefix is the whole log.',",
+    replacement:
+      "verdict: 'complete',\n    text: 'The remaining records authenticate, so this prefix is complete.',",
+  },
+  {
+    id: 'KEA-06',
+    finding: 'A valid view without an external receipt must remain freshness-unknown.',
+    file: 'src/ui/key-evolving-audit.ts',
+    anchor:
+      "verdict: 'unknown',\n    text: 'No external observer supplied a newer lower bound. Timestamps or tags supplied by the compromised logger do not prove that this view is current.',",
+    replacement: "verdict: 'fresh',\n    text: 'The valid tags prove that this view is current.',",
+  },
+  {
+    id: 'KEA-07',
+    finding: 'Changing the compromise boundary must retire evidence from the previous model.',
+    file: 'src/ui/key-evolving-audit.ts',
+    anchor: 'if (next === compromisePeriod) return;',
+    replacement: 'return;',
+  },
+  {
+    id: 'KEA-08',
+    finding: 'The four-result display must retain the visible truncation and freshness limitation.',
+    file: 'src/ui/key-evolving-audit.ts',
+    anchor:
+      'Key evolution alone does not establish completeness or freshness. Those results require their own trusted external expectations.',
+    replacement: 'Key evolution establishes completeness and freshness without external evidence.',
   },
 ];
 
@@ -440,7 +501,7 @@ async function browser(label, ids, restoring = false) {
       '--no-install',
       'playwright',
       'test',
-      SPEC,
+      ...SPECS,
       '--grep',
       grep,
       '--retries=0',
@@ -708,7 +769,7 @@ async function main() {
     head: git(['rev-parse', 'HEAD']).trim(),
     node: process.version,
     nodeExecutable: process.execPath,
-    specification: SPEC,
+    specifications: SPECS,
     sourcePatches: MUTATIONS,
     baseline: {},
     mutations: [],
@@ -722,7 +783,7 @@ async function main() {
     assertCleanTree();
     const committedFiles = [
       ...new Set(MUTATIONS.map((mutation) => mutation.file)),
-      SPEC,
+      ...SPECS,
       RUNNER,
       'package.json',
       'package-lock.json',

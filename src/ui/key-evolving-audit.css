@@ -1,0 +1,282 @@
+.key-evolving-audit {
+  min-width: 0;
+}
+
+.key-evolving-audit .kea-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.key-evolving-audit .kea-controls label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-hi);
+}
+
+.key-evolving-audit .kea-controls select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  white-space: normal;
+  text-align: left;
+  background: var(--panel-strong);
+}
+
+.key-evolving-audit .controls-row {
+  flex-wrap: wrap;
+  margin: 0.8rem 0;
+}
+
+.key-evolving-audit .chip {
+  min-height: 44px;
+  white-space: normal;
+  text-align: left;
+}
+
+.key-evolving-audit .kea-attack-controls {
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
+.key-evolving-audit .kea-status {
+  min-height: 2.8rem;
+  margin: 0.8rem 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--teal);
+  background: var(--panel-strong);
+  color: var(--text-hi);
+}
+
+.key-evolving-audit[data-state='error'] .kea-status {
+  border-left-color: var(--crimson);
+  color: var(--crimson);
+}
+
+.key-evolving-audit[data-retired='true'] .kea-status {
+  border-left-color: var(--amber);
+}
+
+.key-evolving-audit .kea-boundary,
+.key-evolving-audit .kea-wire-secrets,
+.key-evolving-audit .kea-record-fields,
+.key-evolving-audit .kea-dimension-report {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.key-evolving-audit .kea-boundary > div,
+.key-evolving-audit .kea-wire-secrets > div,
+.key-evolving-audit .kea-record-fields > div,
+.key-evolving-audit .kea-dimension-report > div {
+  min-width: 0;
+  padding: 0.65rem;
+  border-left: 2px solid var(--control-border);
+  background: var(--panel-strong);
+}
+
+.key-evolving-audit :is(dt, .kea-record header span:first-child) {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.key-evolving-audit dd {
+  margin-top: 0.25rem;
+  color: var(--text-hi);
+}
+
+.key-evolving-audit .kea-field-wide {
+  grid-column: 1 / -1;
+}
+
+.key-evolving-audit code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.key-evolving-audit .kea-property-results,
+.key-evolving-audit .kea-attack-grid,
+.key-evolving-audit .kea-record-schemes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.key-evolving-audit .kea-property-results {
+  margin: 1rem 0;
+}
+
+.key-evolving-audit .kea-property {
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--control-border);
+  background: var(--panel-strong);
+}
+
+.key-evolving-audit .kea-property h3,
+.key-evolving-audit .kea-attack h3,
+.key-evolving-audit .kea-attack-track h4,
+.key-evolving-audit .kea-scope h3 {
+  margin-top: 0;
+}
+
+.key-evolving-audit .kea-property p {
+  margin: 0;
+}
+
+.key-evolving-audit .kea-property[data-verdict='past-rewrite-rejected'],
+.key-evolving-audit .kea-property[data-verdict='mismatch'],
+.key-evolving-audit .kea-property[data-verdict='missing-close'],
+.key-evolving-audit .kea-property[data-verdict='missed-heartbeat'] {
+  border-left-color: var(--teal);
+}
+
+.key-evolving-audit .kea-property[data-verdict='suffix-forgeable'],
+.key-evolving-audit .kea-property[data-verdict='split-boundary'],
+.key-evolving-audit .kea-property[data-verdict='bounded'],
+.key-evolving-audit .kea-property[data-verdict='match'],
+.key-evolving-audit .kea-property[data-verdict='unknown'] {
+  border-left-color: var(--amber);
+}
+
+.key-evolving-audit .kea-attack-evidence {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.key-evolving-audit .kea-attack {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--panel-strong) 94%, var(--teal));
+}
+
+.key-evolving-audit .kea-attack-track {
+  min-width: 0;
+  padding: 0.8rem;
+  border-left: 3px solid var(--control-border);
+  background: var(--panel-strong);
+}
+
+.key-evolving-audit .kea-attack-track[data-verdict='rejected'] {
+  border-left-color: var(--teal);
+}
+
+.key-evolving-audit .kea-attack-track[data-verdict='accepted'],
+.key-evolving-audit .kea-attack-track[data-verdict='valid-prefix'] {
+  border-left-color: var(--amber);
+}
+
+.key-evolving-audit .kea-attack-wire {
+  margin-top: 0.8rem;
+}
+
+.key-evolving-audit .kea-attack-wire ol,
+.key-evolving-audit .kea-records {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.key-evolving-audit .kea-attack-wire li,
+.key-evolving-audit .kea-record {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  background: rgba(7, 16, 22, 0.45);
+}
+
+html[data-theme='light'] .key-evolving-audit .kea-attack-wire li,
+html[data-theme='light'] .key-evolving-audit .kea-record {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.key-evolving-audit .kea-record header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+  align-items: baseline;
+  margin-bottom: 0.7rem;
+}
+
+.key-evolving-audit .kea-record header strong {
+  color: var(--teal);
+}
+
+.key-evolving-audit .kea-record-schemes > section {
+  min-width: 0;
+}
+
+.key-evolving-audit .kea-details {
+  margin-top: 1rem;
+}
+
+.key-evolving-audit .kea-details > summary,
+.key-evolving-audit .kea-attack-wire > summary {
+  min-height: 44px;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--control-border);
+  color: var(--teal);
+  cursor: pointer;
+}
+
+.key-evolving-audit .kea-details-body {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-top: 0;
+  background: var(--panel-strong);
+}
+
+.key-evolving-audit .kea-details-body a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.key-evolving-audit .kea-wire-warning {
+  padding-left: 0.8rem;
+  border-left: 3px solid var(--amber);
+}
+
+.key-evolving-audit .kea-scope {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-left: 3px solid var(--amber);
+  background: var(--panel-strong);
+}
+
+.key-evolving-audit .kea-scope ul {
+  margin-top: 0.6rem;
+}
+
+.key-evolving-audit :is(button, select, summary, a):focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 4px;
+}
+
+@media (max-width: 639px) {
+  .key-evolving-audit .kea-boundary,
+  .key-evolving-audit .kea-wire-secrets,
+  .key-evolving-audit .kea-record-fields,
+  .key-evolving-audit .kea-dimension-report,
+  .key-evolving-audit .kea-property-results,
+  .key-evolving-audit .kea-attack-grid,
+  .key-evolving-audit .kea-record-schemes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .key-evolving-audit .kea-field-wide {
+    grid-column: auto;
+  }
+}

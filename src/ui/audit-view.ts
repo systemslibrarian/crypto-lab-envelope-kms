@@ -75,6 +75,7 @@ export function renderAuditView(entries: AuditEntry[], verify: VerifyDetail): st
       <span class="audit-count">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</span>
       <button id="tamper-btn" class="chip" type="button">Tamper Entry #1</button>
     </div>
+    <p class="panel-lede">This baseline is an unkeyed local hash chain. It detects the direct edit below because the old hashes remain stored; a write-capable adversary could instead recompute the chain or delete its suffix.</p>
     ${breakExplainer}
     <div class="audit-list" role="list" tabindex="0" aria-label="Audit log entries, scrollable">
       ${entries
