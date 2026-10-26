@@ -38,7 +38,18 @@ export function aesKwpWrap(kek: Uint8Array, plaintext: Uint8Array): Uint8Array {
   return wrapWithIv3394(kek, padded, aiv);
 }
 
-export function aesKwpUnwrap(kek: Uint8Array, ciphertext: Uint8Array): Uint8Array {
+/** expectedLength must come from trusted application policy, not the wrapped blob. */
+export function aesKwpUnwrap(
+  kek: Uint8Array,
+  ciphertext: Uint8Array,
+  expectedLength?: number,
+): Uint8Array {
+  if (
+    expectedLength !== undefined &&
+    (!Number.isInteger(expectedLength) || expectedLength < 1 || expectedLength > 0xffffffff)
+  ) {
+    throw new Error('Expected plaintext length must be an integer from 1 through 2^32-1');
+  }
   if (ciphertext.length < 16 || ciphertext.length % 8 !== 0) {
     throw new Error('RFC 5649 ciphertext length invalid');
   }
@@ -63,6 +74,10 @@ export function aesKwpUnwrap(kek: Uint8Array, ciphertext: Uint8Array): Uint8Arra
   const padLen = padded.length - length;
   if (padLen > 0 && !equalBytes(padded.slice(length), new Uint8Array(padLen))) {
     throw new Error('RFC 5649 non-zero padding bytes');
+  }
+  // Supplement all standard AIV/MLI/padding checks before releasing plaintext.
+  if (expectedLength !== undefined && length !== expectedLength) {
+    throw new Error('RFC 5649 recovered length does not match expected plaintext length');
   }
   return padded.slice(0, length);
 }

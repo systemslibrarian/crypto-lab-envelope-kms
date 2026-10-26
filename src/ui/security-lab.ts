@@ -57,11 +57,16 @@ export function renderSecurityLab(results: Record<string, PropertyResult>): stri
 
   return `<section class="panel security-lab" aria-labelledby="seclab-heading">
     <h2 id="seclab-heading">Security Properties — Try to Break It</h2>
-    <p class="panel-lede">These run the <em>real</em> primitives — RFC 3394 key wrap and AES-256-GCM — and try to defeat each guarantee. Against the real build, watch the math refuse. Then press <strong>Run weakened</strong>: the identical attack against a build missing the one defense that guarantee rests on. The badge goes red, and it means it. ${ran > 0 ? `<strong>${ran}/${PROPERTY_CATALOG.length} run.</strong>` : ''}</p>
+    <p class="panel-lede">These run the <em>real</em> primitives — RFC 3394 key wrap and AES-256-GCM — and try to defeat each guarantee. Observe whether this trial is rejected; one trial does not establish a universal integrity guarantee. Then press <strong>Run weakened</strong>: the identical attack against a build missing the one defense that guarantee rests on. The badge goes red, and it means it. ${ran > 0 ? `<strong>${ran}/${PROPERTY_CATALOG.length} run.</strong>` : ''}</p>
     <div class="chip-row">
       <button id="run-all-props" class="chip" type="button">Run all experiments</button>
       <button id="run-all-props-weakened" class="chip prop-weaken-btn" type="button">Run all weakened</button>
     </div>
+    <aside id="key-wrap-research-note" role="note">
+      <h3>Key-wrap integrity has bounds</h3>
+      <p>John Preuß Mattsson, <a href="https://eprint.iacr.org/2026/2636"><em>Revisiting AES Key Wrap: Forgery Bounds, Structural Observations, and Recommendations for the Revision of NIST SP 800-38F</em></a> (October 2026 preprint), studies conditional forgery bounds. A rejected corruption is not proof that every forgery is impossible.</p>
+      <p>KWP can additionally require a trusted expected plaintext length before releasing a key. This supplements its standard prefix, recovered-length and zero-padding checks. The idealized fixed-length expression is 2<sup>−64−8p</sup> for p padding bytes: 32-byte keys have no padding contribution (2<sup>−64</sup>); 66-byte material has six padding bytes (2<sup>−112</sup> in that model). This is not a universal adaptive bound or a finalized NIST requirement. The API keeps the standard single-block path; replay and context binding remain application responsibilities.</p>
+    </aside>
     <div class="prop-grid">${cards}</div>
   </section>`;
 }

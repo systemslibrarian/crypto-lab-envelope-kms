@@ -318,12 +318,14 @@ function tenantIsolation(mode: PropertyMode): PropertyResult {
 function wrappedDekIntegrity(mode: PropertyMode): PropertyResult {
   const id = 'wrap-integrity';
   const title = 'Wrapped DEKs are authenticated';
-  const claim = 'A corrupted wrapped DEK is rejected, not silently unwrapped to garbage.';
+  const claim = 'This tamper experiment tests whether the corrupted wrapped DEK is rejected.';
   const experiment = 'Wrap a DEK, flip one byte of the wrapped output, then try to unwrap it.';
   const lesson =
     'AES Key Wrap carries a built-in integrity check (the fixed 0xA6A6… IV). A flipped ' +
-    'byte in stored key material is caught on unwrap, so you never decrypt data with a ' +
-    'silently corrupted key.';
+    'byte is rejected in this experiment when that check fails. Integrity is probabilistic: ' +
+    'one rejected corruption does not prove that every forgery is impossible. ' +
+    'KWP additionally checks its length and zero padding; a trusted expected-length policy ' +
+    'can supplement those checks before releasing a key.';
 
   const kek = randomBytes(32);
   const dek = randomBytes(32);

@@ -113,3 +113,9 @@ _"So whether you eat or drink or whatever you do, do it all for the glory of God
 ## Publishing
 
 `npm run deploy` requests the existing `pages.yml` workflow for the current remote `main`. That workflow runs this lab's verification gates before publishing its Pages artifact. A successful request means the run was queued; check the workflow and public site separately to confirm publication. GitHub CLI authentication and workflow-dispatch access are required. Local `dist` files are not uploaded by this command.
+
+## Key-wrap integrity and expected length
+
+A rejected tamper trial is an observed result, not a guarantee that forgery has zero probability. `aesKwpUnwrap(kek, ciphertext, expectedLength?)` optionally requires a trusted application-supplied plaintext length. It always checks the RFC 5649 AIV prefix, recovered-length range and zero padding, then checks the expected length before releasing plaintext. The optional policy must not be inferred from attacker-supplied data. Omitting it preserves RFC behavior, including the single-block path for 1–8-byte inputs.
+
+John Preuß Mattsson, _Revisiting AES Key Wrap: Forgery Bounds, Structural Observations, and Recommendations for the Revision of NIST SP 800-38F_, [ePrint 2026/2636](https://eprint.iacr.org/2026/2636), section 4.2, analyzes conditional forgery bounds. Its idealized fixed-length expression is 2^(-64-8p), where p is the number of padding bytes: 32-byte AES-256 keys have no extra padding contribution (2^-64); 66-byte material has six padding bytes (2^-112 in that model). This is not a universal adaptive-forgery guarantee. The October 2026 preprint is not a finalized NIST requirement. This lab does not adopt its proposed minimum-length construction change. Replay prevention and context binding remain application responsibilities.
