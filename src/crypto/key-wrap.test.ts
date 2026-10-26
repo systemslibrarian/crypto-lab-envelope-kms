@@ -130,3 +130,31 @@ describe('RFC 3394 / 5649 vectors', () => {
     expect(() => aesKwpUnwrap(kek, new Uint8Array(0))).toThrow(/length invalid/i);
   });
 });
+
+describe('KWP trusted expected-length policy', () => {
+  const kek = new Uint8Array(32).fill(7);
+  it.each([1, 7, 8, 9, 13, 16, 32, 66])(
+    'validates length %i without changing the default API',
+    (length) => {
+      const plaintext = new Uint8Array(length).fill(0x42);
+      const ciphertext = aesKwpWrap(kek, plaintext);
+      expect(aesKwpUnwrap(kek, ciphertext)).toEqual(plaintext);
+      expect(aesKwpUnwrap(kek, ciphertext, length)).toEqual(plaintext);
+      expect(() => aesKwpUnwrap(kek, ciphertext, length + 1)).toThrow(/expected plaintext length/);
+    },
+  );
+  it.each([
+    [7, 8],
+    [13, 14],
+  ])('rejects valid different lengths with the same padded size: %i / %i', (wanted, other) => {
+    const ct = aesKwpWrap(kek, new Uint8Array(other));
+    expect(ct.length).toBe(aesKwpWrap(kek, new Uint8Array(wanted)).length);
+    expect(aesKwpUnwrap(kek, ct)).toHaveLength(other);
+    expect(() => aesKwpUnwrap(kek, ct, wanted)).toThrow(/expected plaintext length/);
+  });
+  it.each([0, -1, 1.5, NaN, Infinity, 0x100000000])('rejects invalid policy %s', (length) => {
+    expect(() => aesKwpUnwrap(kek, aesKwpWrap(kek, new Uint8Array(8)), length)).toThrow(
+      /must be an integer/,
+    );
+  });
+});
