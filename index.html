@@ -272,6 +272,14 @@
                 <li>RFC 5649 padded key wrap with byte-exact RFC test vectors.</li>
                 <li>AES-256-GCM sealing via WebCrypto.</li>
                 <li>SHA-256 hash-chained audit log.</li>
+                <li>
+                  HMAC-SHA-256 key-evolving audit log, with the HMAC checked against RFC 4231 and an
+                  independent WebCrypto computation.
+                </li>
+                <li>
+                  Key-handle wrap, unwrap and byte-returning decrypt all run real RFC 3394 AES-KW;
+                  every recovered key is confirmed against an independent AES-GCM challenge.
+                </li>
                 <li>In-memory DEK zeroization before discard.</li>
               </ul>
             </div>
@@ -285,6 +293,15 @@
                   The optional caller/key/operation grant is a teaching check. Caller labels are
                   unverified browser strings, not IAM identities; the normal API remains permissive.
                 </li>
+                <li>
+                  The key-handle token is a small in-memory API model with sensitive handles and
+                  roles, not a hardware token or a PKCS #11 emulator; its bounded explorer searches
+                  only the displayed model.
+                </li>
+                <li>
+                  The key-evolving log's logger compromise and erasure of earlier states are modeled
+                  assumptions of the exercise, not properties a browser tab can enforce.
+                </li>
               </ul>
             </div>
             <div>
@@ -294,6 +311,10 @@
                 <li>FIPS 140-3 certification workflows.</li>
                 <li>KMIP wire protocol.</li>
                 <li>PKCS#11 HSM bindings.</li>
+                <li>
+                  Confidential logging: the key-evolving log is integrity-only, not the full
+                  Schneier–Kelsey protocol or Bellare–Yee's exact construction.
+                </li>
               </ul>
             </div>
           </div>

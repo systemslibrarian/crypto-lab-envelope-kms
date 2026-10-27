@@ -1,13 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const npmCli = join(
+
+// npm publishes its own CLI path as npm_execpath to every script it runs, so
+// under `npm test` the control exercises exactly the npm that invoked it. A
+// bare `node --test` has no such variable; Node's bundled npm then lives beside
+// the binary in the official layout, but not under every package manager
+// (Homebrew keeps npm beside the Cellar, not beside the binary), so the last
+// resort is the `npm` on PATH resolved to its real CLI script. Whatever is
+// chosen is still run by process.execPath, so the control never changes Node.
+const derivedNpmCli = join(
   process.execPath,
   '..',
   '..',
@@ -17,6 +25,24 @@ const npmCli = join(
   'bin',
   'npm-cli.js',
 );
+
+function npmCliFromPath() {
+  for (const dir of (process.env.PATH ?? '').split(delimiter)) {
+    if (!dir) continue;
+    const candidate = join(dir, 'npm');
+    if (!existsSync(candidate)) continue;
+    const real = realpathSync(candidate);
+    if (real.endsWith('.js')) return real;
+  }
+  return undefined;
+}
+
+const npmCli =
+  process.env.npm_execpath && existsSync(process.env.npm_execpath)
+    ? process.env.npm_execpath
+    : existsSync(derivedNpmCli)
+      ? derivedNpmCli
+      : (npmCliFromPath() ?? derivedNpmCli);
 
 // Replace only the external GitHub boundary; exercise the real npm script.
 // Neither control dispatches a workflow or uploads any local build.
@@ -29,6 +55,10 @@ function request(exitCode) {
   );
   chmodSync(gh, 0o700);
   try {
+    assert.ok(
+      existsSync(npmCli),
+      `npm CLI not found at ${npmCli}; run this control through \`npm test\` so npm_execpath names the npm to exercise`,
+    );
     return spawnSync(process.execPath, [npmCli, 'run', 'deploy', '--silent'], {
       cwd: root,
       env: {
