@@ -914,11 +914,19 @@ function bind(root: HTMLElement): void {
       try {
         await navigator.clipboard.writeText(value);
         const original = btn.textContent;
+        const originalLabel = btn.getAttribute('aria-label');
+        // The name moves with the words. axe 4.14 reports
+        // label-content-name-mismatch (WCAG 2.5.3 Label in Name) when the
+        // accessible name does not contain the visible text, and the standing
+        // name "Copy <field>" has no "Copied" in it -- so the resting state
+        // passed and the confirmation state failed.
         btn.textContent = 'Copied';
+        btn.setAttribute('aria-label', `Copied${originalLabel ? `: ${originalLabel}` : ''}`);
         btn.classList.add('active');
         announce('Copied to clipboard');
         setTimeout(() => {
           btn.textContent = original;
+          if (originalLabel !== null) btn.setAttribute('aria-label', originalLabel);
           btn.classList.remove('active');
         }, 1200);
       } catch {

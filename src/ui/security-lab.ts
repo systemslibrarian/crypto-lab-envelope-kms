@@ -49,7 +49,7 @@ export function renderSecurityLab(results: Record<string, PropertyResult>): stri
       <span class="prop-experiment prop-weakening"><strong>Break it:</strong> run the same attack against a build where ${escapeText(meta.weakening)}.</span>
       <div class="prop-btn-row">
         <button class="chip prop-run-btn" type="button" data-prop="${meta.id}" data-mode="defended" aria-label="${escapeAttr(`${runLabel} against the real build: ${meta.title}`)}">${runLabel}</button>
-        <button class="chip prop-weaken-btn prop-run-btn" type="button" data-prop="${meta.id}" data-mode="weakened" aria-label="${escapeAttr(`Run against the weakened build, where ${meta.weakening}: ${meta.title}`)}">Run weakened</button>
+        <button class="chip prop-weaken-btn prop-run-btn" type="button" data-prop="${meta.id}" data-mode="weakened" aria-label="${escapeAttr(`Run weakened: against the weakened build, where ${meta.weakening}: ${meta.title}`)}">Run weakened</button>
       </div>
       ${resultBlock}
     </article>`;
