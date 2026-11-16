@@ -57,7 +57,7 @@ export function keyHandlesPanel(): HTMLElement {
     <details class="handle-model-details"><summary>Why sensitive and nonextractable differ</summary>
       <p><strong>Sensitive</strong> forbids directly reading the key value. A sensitive key with <code>extractable=true</code> may still be wrapped. Setting <code>extractable=false</code> refuses wrapping under either policy. The model's protected unwrap returns a fresh sensitive, nonextractable data handle for the same key bytes; it cannot revoke an existing copy.</p>
       <p>PKCS #11 allows a token to restrict changes to usage attributes. The unsafe choice here models a permissive configuration; it does not describe every token. The normal envelope API elsewhere in this lab deliberately returns raw DEKs and has a different contract.</p>
-      <p><a href="https://docs.oasis-open.org/pkcs11/pkcs11-curr/v3.0/os/pkcs11-curr-v3.0-os.html">OASIS PKCS #11 v3.0 mechanisms §2.16.3</a> permits AES-KW for wrap/unwrap and single-part encrypt/decrypt. <a href="https://docs.oasis-open.org/pkcs11/pkcs11-base/v3.0/os/pkcs11-base-v3.0-os.html">The base specification §4.10 and §5.21.3</a> defines sensitive keys and wrapping permissions.</p>
+      <p><a href="https://docs.oasis-open.org/pkcs11/pkcs11-curr/v3.0/os/pkcs11-curr-v3.0-os.html">OASIS PKCS #11 v3.0 mechanisms §2.16.3</a> permits AES-KW for wrap/unwrap and single-part encrypt/decrypt. <a href="https://docs.oasis-open.org/pkcs11/pkcs11-base/v3.0/os/pkcs11-base-v3.0-os.html">The base specification §4.10 and §5.18.3</a> defines sensitive keys and wrapping permissions.</p>
     </details>`;
 
   const policySelect = panel.querySelector<HTMLSelectElement>('#handle-policy')!;
