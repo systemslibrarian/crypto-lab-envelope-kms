@@ -66,7 +66,9 @@ export async function auditControlNames(page: Page): Promise<ControlNameFailure[
      */
     const ownText = (label: Element): string => {
       const clone = label.cloneNode(true) as Element;
-      clone.querySelectorAll('input, select, textarea, option, optgroup').forEach((n) => n.remove());
+      clone
+        .querySelectorAll('input, select, textarea, option, optgroup')
+        .forEach((n) => n.remove());
       return (clone.textContent ?? '').replace(/\s+/g, ' ').trim();
     };
 
@@ -149,6 +151,6 @@ export function formatControlNameFailures(failures: ControlNameFailure[]): strin
   return failures.map((f) =>
     f.has.length === 0
       ? `${f.control} has no accessible name at all`
-      : `${f.control} is named only by ${f.has.join(', ')} — needs label[for], a wrapping <label>, aria-label or aria-labelledby`
+      : `${f.control} is named only by ${f.has.join(', ')} — needs label[for], a wrapping <label>, aria-label or aria-labelledby`,
   );
 }
