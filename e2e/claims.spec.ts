@@ -325,6 +325,49 @@ test.describe('Envelope KMS — page claims', () => {
     expect(steps.step3note).toContain('40B');
   });
 
+  test('the storage summary lists everything an open needs, and says context must match', async ({
+    page,
+  }) => {
+    await load(page);
+    await resetAll(page);
+    await createKek(page);
+    await seal(page, PLAINTEXT, CONTEXT);
+
+    // SP 800-38D §7.2: authenticated decryption takes the key, IV, ciphertext,
+    // AAD and tag. The DEK is recovered from the wrapped DEK via the named KEK,
+    // so the summary must keep every one of those except the plaintext DEK.
+    const foot = (await page.locator('.wrap-foot').innerText()).replace(/\s+/g, ' ');
+    for (const item of [
+      'ciphertext',
+      'tag',
+      'wrappedDEK',
+      'original IV',
+      'reference to the wrapping key',
+    ]) {
+      expect(foot).toContain(item);
+    }
+    expect(foot).toContain('supply the same context bytes');
+    expect(foot).toContain("Don't store the plaintext DEK");
+    expect(foot).not.toContain('Stored to disk');
+    // The inspector fields it refers to are really there.
+    const insp = await inspector(page);
+    expect(Object.keys(insp.fields).sort()).toEqual([
+      'aad',
+      'ciphertext',
+      'iv',
+      'tag',
+      'wrappedDEK',
+    ]);
+
+    // The prediction answer puts personal data in the encrypted payload, not the context.
+    const predict = page.locator('details.seal-predict');
+    await expect(predict.locator('summary')).toContainText("borrower's name");
+    await predict.locator('summary').click();
+    await expect(predict).toContainText('belongs in the encrypted payload');
+    // And the inspector does not present base64 as protection.
+    await expect(page.getByText('an encoding for display, not encryption')).toHaveCount(1);
+  });
+
   test('Open Latest round-trips to the exact plaintext that was typed', async ({ page }) => {
     await load(page);
     await resetAll(page);

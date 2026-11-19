@@ -1937,6 +1937,25 @@ html[data-theme='light'] .seal-input {
   color: var(--text-hi);
 }
 
+.seal-predict {
+  margin: -4px 0 12px;
+  max-width: 74ch;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.seal-predict > summary {
+  cursor: pointer;
+  color: var(--text-hi);
+  font-weight: 500;
+}
+.seal-predict > p {
+  margin-top: 6px;
+}
+.seal-predict strong {
+  color: var(--text-hi);
+}
+
 /* ── Cross-tenant result (in operations panel) ─────────────────────────── */
 .access-policy-outcome {
   display: grid;

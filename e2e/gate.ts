@@ -327,8 +327,10 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
 
   // The security lab and wire internals stay closed on arrival. The key-handle
   // model adds one nested disclosure; the key-evolving audit lesson adds its
-  // construction and wire-evidence disclosures. All five arrive closed.
-  await expect(page.locator('details')).toHaveCount(5);
+  // construction and wire-evidence disclosures; the seal panel adds its
+  // context prediction. All six arrive closed.
+  await expect(page.locator('details')).toHaveCount(6);
+  await expect(page.locator('details.seal-predict')).toHaveCount(1);
   await expect(page.locator('.handle-model-details')).toHaveCount(1);
   await expect(page.locator('.handle-model-details')).toBeHidden();
   await expect(page.locator('details[open]')).toHaveCount(0);
@@ -959,6 +961,15 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await page.keyboard.press('Tab');
   await expect(page.locator('a.cl-skip-link')).toBeFocused();
   await scanAt('skip link focused');
+
+  // ── The seal panel's context prediction, opened by its own summary ──────
+  const predict = page.locator('details.seal-predict');
+  await predict.locator(':scope > summary').click();
+  await expect(predict).toHaveAttribute('open', '');
+  await settle(page);
+  await scanAt('seal context prediction opened');
+  await predict.locator(':scope > summary').click();
+  await expect(predict).not.toHaveAttribute('open', '');
 
   // ── The security lab, reached through its own summary ───────────────────
   // Opened before anything else is driven, because the request-flow tabs and

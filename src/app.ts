@@ -215,8 +215,9 @@ function architectureDiagram(): string {
 
       <!-- Storage -->
       <rect x="740" y="100" width="200" height="80" rx="6" class="node-root" />
-      <text x="840" y="135" text-anchor="middle" class="node-text">Object Storage</text>
-      <text x="840" y="156" text-anchor="middle" class="node-subtext">ciphertext + wrappedDEK</text>
+      <text x="840" y="128" text-anchor="middle" class="node-text">Object Storage</text>
+      <text x="840" y="149" text-anchor="middle" class="node-subtext">ciphertext · tag · IV</text>
+      <text x="840" y="166" text-anchor="middle" class="node-subtext">wrappedDEK · kekId@version</text>
 
       <!-- Edges: client <-> kms -->
       <g class="edge-arrow" color="var(--teal)">
@@ -231,7 +232,7 @@ function architectureDiagram(): string {
 
       <!-- Edge: client -> storage -->
       <line x1="240" y1="140" x2="740" y2="140" class="edge" marker-end="url(#arr)" color="var(--text-dim)" />
-      <text x="490" y="135" text-anchor="middle" class="node-subtext">2. PUT ciphertext + wrappedDEK</text>
+      <text x="490" y="135" text-anchor="middle" class="node-subtext">2. PUT envelope (ciphertext, tag, IV, wrappedDEK, KEK ref)</text>
 
       <!-- Edge: storage -> kms (decrypt) -->
       <g class="edge-arrow" color="var(--amber)">
@@ -345,9 +346,12 @@ function wrapVisualizer(): string {
          <span class="wrap-note">the live DEK bytes were overwritten with zeros — only the wrapped copy survives</span>`,
       )}
     </ol>
-    <p class="wrap-foot">Stored to disk: <strong>ciphertext + tag + wrappedDEK</strong>. Never stored:
-      the plaintext DEK. To read the data later, the KMS unwraps the DEK with the KEK — the one step
-      that requires the vault.</p>
+    <p class="wrap-foot">What to keep: <strong>the ciphertext, tag, wrappedDEK,
+      original ${gloss('iv', 'IV')}, and the reference to the wrapping key</strong> (kekId and version).
+      To reopen the envelope, supply the same context bytes (the AAD); those bytes can travel
+      with the envelope or be reconstructed by the application. Don't store the plaintext DEK. To read
+      the data later, the KMS unwraps the DEK with the KEK — the one step that requires the vault.
+      This describes what a real application needs to retain, not what this browser demo writes to disk.</p>
   </section>`;
 }
 
@@ -451,6 +455,12 @@ function appMarkup(): string {
       </label>
     </div>
     <p class="seal-hint">The context becomes the ${gloss('AAD')}: authenticated but not encrypted by AES-GCM. Its tag binds the context to the payload ciphertext; the RFC 3394 wrapped DEK does not take a separate AAD argument. Change the context, seal, then use <strong>Open as different tenant</strong> to watch the GCM tag refuse.</p>
+    <details class="seal-predict">
+      <summary>Predict before you seal: which belongs in the authenticated context — "library export" or a borrower's name?</summary>
+      <p>A non-sensitive label such as <strong>library export</strong> is fine in the context if the application needs to
+        bind it to the ciphertext. The context is authenticated, not encrypted, so anyone holding the envelope can read it.
+        A borrower's name, if it is needed at all, belongs in the encrypted payload.</p>
+    </details>
     <div class="controls-row">
       <button id="create-key" class="chip" type="button">Create KEK</button>
       <button id="seal-btn" class="chip" type="button" ${latestKey === 'none' ? 'disabled' : ''}>Generate + Seal</button>
@@ -466,7 +476,7 @@ function appMarkup(): string {
   ${wrapVisualizer()}
   ${scenariosPanel()}
   ${renderHierarchyView(keys, state.envelopes)}
-  <section class="panel"><h2>Envelope Inspector</h2><p class="panel-lede">The on-the-wire payload for the most recently sealed message. Click any field to copy.</p>${envelopeInspector(state.envelopes)}</section>
+  <section class="panel"><h2>Envelope Inspector</h2><p class="panel-lede">The on-the-wire payload for the most recently sealed message. Click any field to copy. Values are shown in base64 — an encoding for display, not encryption: the AAD below is readable by anyone who holds the envelope.</p>${envelopeInspector(state.envelopes)}</section>
   ${accessPolicyPanel()}
 
   <section class="panel deeper" aria-labelledby="deeper-heading">
