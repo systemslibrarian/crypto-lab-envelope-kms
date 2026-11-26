@@ -1,5 +1,6 @@
 import { aesKwUnwrap, aesKwWrap } from '../crypto/aes-kw';
 import { aeadOpen, aeadSeal } from '../crypto/aead';
+import { zeroize } from '../crypto/bytes';
 import { auditLog } from './audit-log';
 import { kekStore } from './kek-store';
 
@@ -76,11 +77,12 @@ export class KmsApi {
     input: { plaintext: Uint8Array; keyId: string; aad?: Uint8Array },
     principal = 'app',
   ): Promise<EncryptResponse> {
+    let plaintextDEK: Uint8Array | undefined;
     try {
       const aad = input.aad ?? new Uint8Array();
       const dataKey = await this.GenerateDataKey(input.keyId, 32, principal);
-      const { ciphertext, iv, tag } = await aeadSeal(input.plaintext, dataKey.plaintextDEK, aad);
-      dataKey.plaintextDEK.fill(0);
+      plaintextDEK = dataKey.plaintextDEK;
+      const { ciphertext, iv, tag } = await aeadSeal(input.plaintext, plaintextDEK, aad);
       auditLog.append({
         operation: 'Seal',
         principal,
@@ -107,6 +109,8 @@ export class KmsApi {
         details: String(error),
       });
       throw error;
+    } finally {
+      if (plaintextDEK) zeroize(plaintextDEK);
     }
   }
 
@@ -168,16 +172,16 @@ export class KmsApi {
     },
     principal = 'app',
   ): Promise<WrappedDekRef> {
+    let plaintextDEK: Uint8Array | undefined;
     try {
       const sourceMaterial = kekStore.getMaterialForUnwrap(
         input.sourceKek.kekId,
         input.sourceKek.kekVersion,
       );
-      const plaintext = aesKwUnwrap(sourceMaterial, input.wrappedDEK);
+      plaintextDEK = aesKwUnwrap(sourceMaterial, input.wrappedDEK);
       const destVersion = input.destKek.version ?? kekStore.getCurrentVersion(input.destKek.keyId);
       const destMaterial = kekStore.getMaterialForUnwrap(input.destKek.keyId, destVersion);
-      const wrappedDEK = aesKwWrap(destMaterial, plaintext);
-      plaintext.fill(0);
+      const wrappedDEK = aesKwWrap(destMaterial, plaintextDEK);
       auditLog.append({
         operation: 'ReEncrypt',
         principal,
@@ -195,6 +199,8 @@ export class KmsApi {
         details: String(error),
       });
       throw error;
+    } finally {
+      if (plaintextDEK) zeroize(plaintextDEK);
     }
   }
 

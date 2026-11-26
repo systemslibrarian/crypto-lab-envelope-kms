@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as aead from '../crypto/aead';
+import * as keyWrap from '../crypto/aes-kw';
 import { decoder, encoder, zeroize } from '../crypto/bytes';
 import { auditLog } from './audit-log';
 import { kekStore } from './kek-store';
@@ -10,6 +12,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   auditLog.clear();
   kekStore.clear();
 });
@@ -43,6 +46,26 @@ describe('KmsApi', () => {
     expect(enc.tag.length).toBe(16);
     const opened = await kmsApi.DecryptEnvelope({ ...enc }, 'test');
     expect(decoder.decode(opened)).toBe('round trip me');
+  });
+
+  it('Encrypt zeroizes the plaintext DEK when the AEAD step fails', async () => {
+    const { keyId } = await kmsApi.CreateKey('AES256', 'test');
+    const retained = new Uint8Array(32).fill(0x5a);
+    const generate = vi.spyOn(kmsApi, 'GenerateDataKey').mockResolvedValueOnce({
+      plaintextDEK: retained,
+      wrappedDEK: new Uint8Array(40),
+      kekId: keyId,
+      kekVersion: 1,
+    });
+    const seal = vi.spyOn(aead, 'aeadSeal').mockRejectedValueOnce(new Error('aead failed'));
+
+    await expect(
+      kmsApi.Encrypt({ plaintext: encoder.encode('private'), keyId }, 'test'),
+    ).rejects.toThrow('aead failed');
+    expect(retained).toEqual(new Uint8Array(32));
+
+    generate.mockRestore();
+    seal.mockRestore();
   });
 
   it('changing only AES-GCM AAD leaves the wrap intact but makes opening fail', async () => {
@@ -101,6 +124,31 @@ describe('KmsApi', () => {
     // Unwrapping under the destination yields the original DEK bytes.
     const recovered = await kmsApi.Decrypt(moved, 'test');
     expect(Array.from(recovered)).toEqual(Array.from(expected));
+  });
+
+  it('ReEncrypt zeroizes an unwrapped DEK when the destination lookup fails', async () => {
+    const src = await kmsApi.CreateKey('AES256', 'src');
+    const dk = await kmsApi.GenerateDataKey(src.keyId, 32, 'test');
+    const retained = new Uint8Array(32).fill(0xa5);
+    const unwrap = vi.spyOn(keyWrap, 'aesKwUnwrap').mockReturnValueOnce(retained);
+
+    await expect(
+      kmsApi.ReEncrypt(
+        {
+          wrappedDEK: dk.wrappedDEK,
+          sourceKek: {
+            wrappedDEK: dk.wrappedDEK,
+            kekId: src.keyId,
+            kekVersion: dk.kekVersion,
+          },
+          destKek: { keyId: 'missing-destination' },
+        },
+        'test',
+      ),
+    ).rejects.toThrow();
+    expect(retained).toEqual(new Uint8Array(32));
+
+    unwrap.mockRestore();
   });
 
   it('RotateKey advances the active version and audits it', async () => {
