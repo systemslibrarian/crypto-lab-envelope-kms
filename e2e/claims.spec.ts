@@ -368,6 +368,23 @@ test.describe('Envelope KMS — page claims', () => {
     await expect(page.getByText('an encoding for display, not encryption')).toHaveCount(1);
   });
 
+  test('empty and BOM-leading messages retain their UTF-8 bytes', async ({ page }) => {
+    await load(page);
+    await resetAll(page);
+    await createKek(page);
+    for (const plaintext of ['', '\uFEFF  Café 🔐  ']) {
+      await seal(page, plaintext, CONTEXT);
+      const { fields } = await inspector(page);
+      expect(fields.ciphertext.decodedLength).toBe(Buffer.byteLength(plaintext, 'utf8'));
+      expect(fields.tag.decodedLength).toBe(16);
+      await page.locator('#open-btn').click();
+      const expected = plaintext.length ? plaintext : '(empty message, 0 bytes)';
+      await expect
+        .poll(() => page.locator('.timeline li').last().textContent())
+        .toBe(`Open -> ${expected}`);
+    }
+  });
+
   test('Open Latest round-trips to the exact plaintext that was typed', async ({ page }) => {
     await load(page);
     await resetAll(page);

@@ -61,7 +61,7 @@ const GLOSS: Record<string, string> = {
   KEK: 'KEK — key encryption key: a key whose only job is to encrypt (wrap) other keys, never data.',
   'root-KEK':
     'root-KEK — the top key, kept inside the HSM; it encrypts the KEKs and never leaves the vault.',
-  AAD: 'AAD — associated data: authenticated but NOT encrypted; it binds context (tenant, purpose) to the ciphertext so a stolen envelope cannot be replayed elsewhere.',
+  AAD: 'AAD — additional authenticated data. The tag binds context such as tenant or purpose to the ciphertext. Recognizing a repeated valid envelope requires separate application state.',
   iv: 'iv — initialization vector: the 12-byte random nonce AES-GCM needs; unique per message, not secret.',
   tag: 'tag — the 128-bit AES-GCM authentication tag; any change to ciphertext or AAD makes it fail.',
   wrappedDEK: 'wrappedDEK — the DEK after being encrypted (wrapped) under the KEK via RFC 3394.',
@@ -550,7 +550,7 @@ async function onSeal() {
   const keyId = activeKeyId();
   if (!keyId) throw new Error('Create a key first');
   state.keyId = keyId;
-  const plaintext = state.plaintext.length ? state.plaintext : 'Hello envelope world';
+  const plaintext = state.plaintext;
   const context = state.context;
   const aadBytes = encoder.encode(context);
   const { plaintextDEK, wrappedDEK, kekId, kekVersion } = await kmsApi.GenerateDataKey(
@@ -642,7 +642,11 @@ async function onOpen() {
   const latest = state.envelopes[state.envelopes.length - 1];
   if (!latest) return;
   const plaintext = await open(latest);
-  state.timeline.push(`Open -> ${decoder.decode(plaintext)}`);
+  // A leading U+FEFF is part of the message the learner supplied.
+  const message = new TextDecoder('utf-8', { ignoreBOM: true }).decode(plaintext);
+  state.timeline.push(
+    plaintext.length === 0 ? 'Open -> (empty message, 0 bytes)' : `Open -> ${message}`,
+  );
 }
 
 async function onRotate() {
