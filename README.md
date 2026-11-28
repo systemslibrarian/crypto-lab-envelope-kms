@@ -29,7 +29,7 @@ The normal security model assumes KEKs stay inside a trust boundary and the basi
 - Multi-tenant systems needing per-tenant key isolation — distinct KEKs separate cryptographic key material, but requests still require authenticated callers and key-scoped authorization.
 - Regulated environments (PCI-DSS, HIPAA, FedRAMP) requiring documented key rotation and audit trails.
 - Do **NOT** use this pattern for ephemeral session keys — TLS-style key schedules are the right shape there.
-- Do **NOT** reinvent — real deployments use AWS KMS, Google Cloud KMS, Azure Key Vault, or HashiCorp Vault. This demo shows how they work internally.
+- Do **NOT** reinvent — real deployments use AWS KMS, Google Cloud KMS, Azure Key Vault, or HashiCorp Vault. This demo models selected API behavior. Its browser objects and key handling do not reproduce the providers’ internals or inherit their verification results.
 
 ## Live Demo
 
@@ -54,7 +54,7 @@ In **"Can another call sequence expose it?"**, choose one of three presets and c
 
 ## Real-World Usage
 
-- **AWS KMS** — `GenerateDataKey` returns a plaintext DEK plus a wrapped DEK; the envelope pattern in this demo mirrors its API surface.
+- **AWS KMS** — `GenerateDataKey` returns a plaintext DEK plus a wrapped DEK; the envelope pattern in this demo resembles that API. AES-KW with the default initial value is deterministic for fixed key material. Wrapping the same 32-byte data key twice under the same wrapping key gives the same 40-byte result. A fresh data key yields a different wrap under that wrapping key. The wrapped key alone does not authenticate a tenant identifier or usage policy. [RFC 3394 §§2.2–2.2.3](https://www.rfc-editor.org/rfc/rfc3394.html#section-2.2).
 - **Google Cloud KMS and Azure Key Vault** — provide managed KEKs and key wrap/unwrap for the same DEK/KEK hierarchy.
 - **HashiCorp Vault** — the transit secrets engine performs envelope-style encryption and key rotation for applications.
 - **Storage-at-rest encryption** — services like S3, EBS, and database TDE use envelope encryption so bulk data is encrypted under DEKs while only KEKs touch the HSM/KMS.
